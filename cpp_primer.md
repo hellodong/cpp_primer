@@ -58,4 +58,41 @@ string isbn() const {return this->bookNo;}
 ```
 因为this的目的总是指向"这个"对象，所以this是一个**常量指针**, 我们不允许改变this中保存的地址。
 ##### 引入const成员函数
+```c
+string isbn() const {return bookNo};
+```
+这里const作用是修改隐式this指针的类型。默认情况下，this的类型是指向类类型非常量版本的常量指针--> this的类型是 <class type> *const。我们不能在一个常量对象上调用普通成员函数。
+可以把上述函数体想象成如下形式:
+```c
+//下面代码是非法的：我们不能显示的定义自己的this指针
+string Sales_data::isbn(const Sales_data *const this) {return this->isbn;}
+```
+因为this是指向常量的指针,所以常量成员函数不能改变调用它的对象的内容。
+
+**常量对象，以及常量对象的引用或指针都只能调用常量成员函数**
+
+##### 可变数据成员
+一个**可变数据成员**永远不会是const,即使它是const对象的成员。一个const成员函数可以改变一个可变成员的的值。举个例子，我们给Screen添加一个名为access_ctr的可变成员
+```c
+class Screen{
+    public:
+        Screen() = default;
+        void some_memb() const;
+        int get_some_memb() const;
+    private:
+        mutable int access_ctr = 0; //可变数据成员用 mutable 修饰
+};
+Screen::Screen():access_ctr(0)
+{}
+void Screen::some_memb() const
+{
+    ++access_ctr;
+}
+void Screen::get_some_memb() const
+{
+    return access_ctr;
+}
+```
+some_memb 是一个const成员函数，它仍然能够改变access_ctr的值。任何成员函数，包括const函数在内部都能改变可变数据成员的值。
+
 
