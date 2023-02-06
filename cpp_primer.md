@@ -123,3 +123,35 @@ Sales_data trans;
 类需要控制拷贝、赋值和销毁对象时发生的行为。如果我们不主动定义这些操作，编译器将替我们合成他们。一般来说，编译器生成的版本将对对象的每个成员执行拷贝、赋值和销毁操作。
 
 对于某些类来说合成的版本无法正常工作。
+
+### 访问控制与封装
+在C++语言中，我们使用**访问说明符**加强类的封装性:
+- 定义在**public**说明符后的成员在整个程序内可以被访问，
+- 定义在**private**说明符后的成员可以被类的成员函数访问，但是不能被使用该类的代码访问，private部分封装了类的实现细节
+
+定义的类的所有成员是public时，使用struct;反之，如果希望成员时private时，使用class。
+
+#### 友元
+类可以允许其他类或函数访问它的非共有成员，方法是另其他类或者函数成为它的友元(friend)
+```c
+
+class Sales_data
+{
+    friend std::ostream &print(std::ostream &, const Sales_data &);
+    public:
+        Sales_data() = default;
+        Sales_data(const std::string &s, unsigned int n, double p): bookNo(s),units_sold(n),price(p)
+        {}
+
+    private:
+        std::string bookNo;
+        unsigned int units_sold = 0;
+        double price;
+};
+
+std::ostream &print(std::ostream &, const Sales_data &);
+
+```
+
+#### 友元的声明
+如果我们希望类的用户能够调用某个友元函数，那么我们就必须在友元声明之外再专门对函数进行一次声明。
