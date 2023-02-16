@@ -14,6 +14,8 @@ class Screen{
         char get() const
         { return contents[cursor];}
         inline char get(pos r, pos c) const;
+        Screen &set(char ch);
+        Screen &set(pos r, pos c, char ch);
         Screen &move(pos r, pos c);
     private:
         pos cursor = 0;
