@@ -155,3 +155,125 @@ std::ostream &print(std::ostream &, const Sales_data &);
 
 #### 友元的声明
 如果我们希望类的用户能够调用某个友元函数，那么我们就必须在友元声明之外再专门对函数进行一次声明。
+
+### 类的其他特性
+这些特性包括:
+- 类型成员
+- 类的成员
+- 类成员的类内初始值
+- 可变数据成员
+- 内联成员函数
+- 从成员函数返回*this
+##### 另成员函数为内联函数
+定义再类内部的成员函数是自动inline的，如：
+```c
+class Screen{
+    public:
+        using pos=std::string::size_type;
+        Screen() = default;
+        Screen(pos ht, pos wd, char c):height(ht),width(wd),contents(ht * wd, c)
+        {}
+        char get() const
+        { 
+            return contents[cursor];
+        }
+
+    private:
+        pos cursor = 0;
+        pos height = 0, width = 0;
+        std::string contents;
+};
+```
+因此Screen构造函数和返回光标所指字符的get函数默认是inline函数。同样的也能再类的外部用inline关键字修饰函数的定义:
+```c
+inline Screen &Screen::move(pos r, pos c)
+{
+    pos row = r * width;
+    cursor = row + c;
+    return *this;
+}
+
+char Screen::get(pos r, pos c) const
+{
+    pos row = r * width;
+    return contents[row + c];
+}
+```
+我们无需再声明和定义的地方同时说明为inline。不过, 最好只在类外部定义的地方说明inline,这样可以使类更容易理解。
+##### 重载成员函数
+成员函数也可以被重载,只要函数之间在参数的**数量和/或类型上**有所区别就行，如Screen类定义了两个版本的get函数
+```c
+Screen myscreen;
+char ch = myscreen.get();  //调用Screen::get()
+ch = myscreen.get(0,0);    //调用Screen::get(pos,pos)
+```
+
+##### 可变数据成员
+在一个const成员函数内，可以通过在变量的声明中加入mutable关键就可以修改这个变量。一个可变数据成员永远不会是const，即使它是const对象的成员。因此，一个const成员函数可以改变一个可变成员的值。举个例子:
+```c
+class Screen{
+    public:
+        void some_member() const;
+    private:
+        mutable size_t access_ctn;
+};
+
+void Screen::some_member() const
+{
+    ++access_ctn;
+}
+```
+
+#### 返回*this的成员函数
+```c
+class Screen{
+    public:
+        Screen &set(char ch);
+        Screen &set(pos r, pos c, char ch);
+        Screen &move(pos r, pos c);
+    private:
+        pos cursor = 0;
+        pos height = 0, width = 0;
+        std::string contents;
+};
+
+Screen &Screen::move(pos r, pos c)
+{
+    pos row = r * width;
+    cursor = row + c;
+    return *this;
+}
+
+Screen &Screen::set(char ch)
+{
+    contents[cursor] = ch;
+    return *this;
+}
+
+Screen &Screen::set(pos r, pos c, char ch)
+{
+    contents[r*width + c] = ch;
+    return *this;
+}
+
+```
+返回引用的函数是左值，意味着这些函数返回的是对象本身而非对象副本。把一系列操作连接在一条表达式:
+```c
+myScreen.move(4,0).set('#');
+```
+上述语句等价于:
+```
+myScreen.move(4,0);
+myScreen.set('#');
+```
+##### 从const成员函数返回*this
+我们继续添加一个名为display的操作，我们令display为一个const成员，此时，this将是一个指向const 的指针而*this 是const对象。我们不能把display嵌入到一组动作的序列中去:
+```c
+Screen myScreen;
+// 如果display返回常量引用, 则调用set将引发错误
+myScreen.display(cout).set('*');
+```
+即使myScreen是个非常量对象，则set的调用也无法通过编译。
+- 一个const 成员函数如果以引用形式返回*this,那么它的返回类型将是常量引用
+##### 基于const的重载
+通过区分成员函数是否是const的，我们可以对其进行重载。因为非常量版本的函数对于常量对象是不可用的，所以我们只能在一个常量对象用const成员函数。另外，可以在非常量对象上调用常量版本或非常量版本，显然此时非常量版本是一个更好的匹配。
