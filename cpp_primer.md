@@ -134,7 +134,6 @@ Sales_data trans;
 #### 友元
 类可以允许其他类或函数访问它的非共有成员，方法是另其他类或者函数成为它的友元(friend)
 ```c
-
 class Sales_data
 {
     friend std::ostream &print(std::ostream &, const Sales_data &);
@@ -148,9 +147,7 @@ class Sales_data
         unsigned int units_sold = 0;
         double price;
 };
-
 std::ostream &print(std::ostream &, const Sales_data &);
-
 ```
 
 #### 友元的声明
@@ -277,3 +274,62 @@ myScreen.display(cout).set('*');
 - 一个const 成员函数如果以引用形式返回*this,那么它的返回类型将是常量引用
 ##### 基于const的重载
 通过区分成员函数是否是const的，我们可以对其进行重载。因为非常量版本的函数对于常量对象是不可用的，所以我们只能在一个常量对象用const成员函数。另外，可以在非常量对象上调用常量版本或非常量版本，显然此时非常量版本是一个更好的匹配。
+```c
+class Screen{
+    public:
+        using pos=std::string::size_type;
+        Screen() = default;
+        Screen(pos ht, pos wd, char c=' '):height(ht),width(wd),contents(ht * wd, c)
+        {}
+        Screen &display(std::ostream &os)
+        {
+                do_display(os);
+                return *this;
+        }
+        const Screen &display(std::ostream &os) const
+        {
+                do_display(os);
+                return *this;
+        }
+    private:
+        pos cursor = 0;
+        pos height = 0, width = 0;
+        std::string contents;
+        void do_display(std::ostream &os) const
+        {
+                os << contents;
+        }
+};
+```
+当一个成员调用另一个成员时，this指针在其中隐式地传递。display调用do_display时，它的this指针隐式地传递给do_display。而当display的非常量函数调用do_display时，它的this指针将隐式的从指向非常量指针转换成常量指针。do_display完成后，display函数各自返回解引用this所得对象。
+在非常量版本中,this指向一个非常量对象，因此display返回一个普通的(非常量)引用;而const 成员返回一个常量引用。
+#### 类类型
+对于两个类来说，即使他们的成员完全一样，这两个类也时两个不通的类型。
+```c
+class First {
+    public:
+    int getMem();
+    private:
+    int memi;
+};
+
+class Second {
+    public:
+    int getMem();
+    private:
+    int memi;
+};
+
+First obj1;
+Second obj2 = obj1;         //错误：obj1和obj2的类型不同
+```
+- 即使两个类的成员列表完全一致，它们也是不同的类型。对于一个类来说，它的成员和其他任何类的成员都不是一回事
+##### 类的声明
+我们能仅仅声明类而暂时不定义它，被称为**前向声明(forward declaration)**。在它声明之后定义之前是**一个不完全类型(incomeplete type)**。
+不完全类型只能在非常有限情况下使用：可以定义指向这种类型的指针或引用，也可以声明（但是不能定义）以不完全类型作为参数或返回类型的函数。
+
+### 友元再探
+普通的成员函数能定义成友元。类还可以把其他类定义成友元，也可以把其他类的成员函数定义成友元。友元函数能定义在类内部，这样的函数是隐式内联的。
+
+
+
