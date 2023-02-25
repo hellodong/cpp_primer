@@ -10,6 +10,6 @@ Screen &Screen::set(char ch)
 
 Screen &Screen::set(pos r, pos c, char ch)
 {
-    contents[r*width + c] = ch;
+    contents[r * width + c] = ch;
     return *this;
 }
