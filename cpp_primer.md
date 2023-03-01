@@ -328,8 +328,98 @@ Second obj2 = obj1;         //错误：obj1和obj2的类型不同
 我们能仅仅声明类而暂时不定义它，被称为**前向声明(forward declaration)**。在它声明之后定义之前是**一个不完全类型(incomeplete type)**。
 不完全类型只能在非常有限情况下使用：可以定义指向这种类型的指针或引用，也可以声明（但是不能定义）以不完全类型作为参数或返回类型的函数。
 
-### 友元再探
+##### 友元再探
 普通的成员函数能定义成友元。类还可以把其他类定义成友元，也可以把其他类的成员函数定义成友元。友元函数能定义在类内部，这样的函数是隐式内联的。
+
+### 类的作用域
+每个类都会定义它自己的作用域，在类的作用域之外，普通的数据和函数成员只能由对象、引用或者指针使用成员访问运算符。对于类类型成员则使用作用域运算符访问。
+##### 作用域和定义在类外部的成员
+1. 在类的外部，成员名字就被隐藏起来了。一旦遇到了类名，定义的剩余部分就在类的作用域之内了，这里的剩余部分包括参数*列表*和*函数体*(也包括类型)---->我们可以直接使用类的其他成员而无需再次授权了。
+```c
+void Window_mgr::clear(ScreenIndex idx)
+{
+    Screen &s = screens[idx];
+    s.contents = string(s.height * s.width, ' ');
+}
+```
+2. 成员函数定义在类的外部，返回类型中使用的名字位于类的作用域外，返回类型必须指明它是那个类的成员：
+```c
+class Window_mgr{
+    public:
+        ScreenIndex addScreen(const Screen&);
+};
+
+Window_mgr::ScreenIndex     //要想使用ScreenIndex作为返回类型，必须明确指定那个类型
+Window_mgr::addScreen(const Screen &s)
+{
+    screens.push_back(s);
+    return screens.size() - 1;
+}
+```
+#### 名字查找与类的作用域
+**名字查找(name lookup)**:
+- 在名字所在块中寻找其声明语句，只考虑在名字的使用之前出现的声明
+- 如果没找到，继续查找外层作用域
+- 如果最终没找到匹配的声明，则程序报错。
+类内部成员函数与上述规则有所区别。类的定义分两步处理:
+- 首先，编译成员的声明
+- 直到类全部可见后才编译函数体
+成员函数体直到整个类可见后才会被处理，所以它能使用类中定义的任何名字
+##### 用于类成员声明的名字查找
+声明中使用的名字，包括返回类型或者参数列表中使用的名字，都必须在使用前确保可见。
+##### 类型名要特殊处理
+内层作用域可以重新定义外层作用域中的名字，即使该名字已经在内层作用域中使用过。然后在类中，如果成员使用了外层作用域中的某个名字，而该名字代表一种类型，则类不能再之后重新定义该名字：
+```c
+typedef double Money;
+class Account {
+    public:
+        Money balance() {return bal;}   //使用外层域中的Money
+    private:
+        typedef double Money;
+        Money bal;                      //错误，不能宠幸定义Money
+};
+```
+##### 成员定义中的普通块作用域的名字查找
+成员函数中使用的名字按如下方式解析:
+- 在成员函数内查找该名字的声明。只有函数使用之前出现的声明才被考虑。
+- 如果在成员函数内没找到，则在类内继续查找，类的所有成员都可以考虑。
+- 如果类内也没找到该名字的声明，在成员函数定义之前作用域内继续查找。
+
+一般来说，不建议使用其他成员的名字作为某个成员函数的参数。我们在dummy_fcn函数中暂时违反以下这个约定:
+```c
+// 通常情况下不建议为参数和成员使用同样的名字
+int height;     // 定义一个名字, 稍后再Screen中使用
+class Screen {
+    public:
+        typedef std::string::size_type pos;
+        void dummy_fcn(pos height)
+        {
+            cursor = width * height; //height 是形参
+        }
+    private:
+    pos cursor = 0;
+    pos height = 0,width = 0;
+};
+```
+上述代码,height参数隐藏了同名的成员。如果想绕开上面的查找规则，将代码变为：
+```c
+void Screen::dummy_fcn(pos height)
+{
+    cursor = width * this->height;      //成员 height
+    //另外一种写法
+    cursor = width * Screen::height;    //成员height
+}
+```
+##### 类作用域之后，在外围的作用域中查找
+我们需要的是外层作用域中的名字，可以显示地通过作用域运算符来进行请求:
+```c
+void Screen::dummy_fcn(pos height)
+{
+    cursor = width * ::height;      //全局的height
+}
+```
+*尽管外层的对象被隐藏了，但我们仍然可以用作用域运算符访问它。*
+
 
 
 
