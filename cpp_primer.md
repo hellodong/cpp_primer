@@ -420,6 +420,36 @@ void Screen::dummy_fcn(pos height)
 ```
 *尽管外层的对象被隐藏了，但我们仍然可以用作用域运算符访问它。*
 
+### 构造函数再探
+#### 构造函数初始值列表
+##### 构造函数的初始值有时必不可少
+类的数据成员初始化和赋值是有差异的。成员是const 或者引用，必须将其初始化。当成员属于某种类类型，并且没有定义默认构造函数，也必须将其这个成员初始化。
+```c
+class ConstRef{
+    public :
+        ConstRef(int val);
+    private:
+        int i;
+        const int ci;
+        int &ri;
+};
+```
+如果我们没有为他们提供构造函数初始值将引发错误：
+```c
+ConstRef::ConstRef(int val)
+{
+    i = val;    // 赋值
+    ci = val;    // 错误：不能给const 赋值
+    ri = i;    // 错误：ri 没有被初始化
+}
+```
+我们初始化const或者引用类型的数据唯一机会就是通过构造函数初始值，正确方式如下:
+```c
+ConstRef::ConstRef(int val):i(val), ci(val),ri(i) 
+{}
+```
+
+
 
 
 
