@@ -448,6 +448,18 @@ ConstRef::ConstRef(int val)
 ConstRef::ConstRef(int val):i(val), ci(val),ri(i) 
 {}
 ```
+##### 成员初始化顺序
+成员的初始化顺序与他们类定义中的顺序一致：第一个成员先被初始化，然后第二个，以此类推。构造函数初始化值列表中初始值的前后位置关系不会影响实际的初始化关系。
+举个例子:
+```c
+class X {
+    int i;
+    int j;
+    public:
+        //未定义的：i在j之前就被初始化
+        X(int val):j(val), i(j) {}
+};
+```
 
 
 
