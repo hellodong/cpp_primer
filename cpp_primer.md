@@ -461,6 +461,21 @@ class X {
 };
 ```
 
+##### 委托构造函数
+**委托构造函数**, 一个委托构造函数使用它所属类的其他构造函数执行它自己的初始化过程，或者说它把它自己的一些职责委托给了其他构造函数。
+```c
+class Sales_data {
+    public:
+        Sales_data(std::string s, unsigned int cnt, double price):bookNo(s),units_sold(cnt), revenue(cnt * prices) {}
+        Sales_data():Sales_data("",0,0) {}
+        Sales_data(std::string s): Sales_data(s, 0, 0) {}
+        Sales_data(std::isstream &is):Sales_data()
+            {read(is, *this);} 
+};
+```
+假如函数体包含这些代码的话，将先执行这些代码，然后控制权才会交还给委托者.
+
+
 
 
 
