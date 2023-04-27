@@ -658,12 +658,6 @@ item.combine(static_cast<Sales_data>(cin))
 - 没有基类，也没有virtual函数
 
 
-
-
-
-
-
-
 例如下面是个聚合类:
 ```c
 struct Data{
@@ -671,4 +665,3 @@ struct Data{
     string s;
 }
 ```
-11111
