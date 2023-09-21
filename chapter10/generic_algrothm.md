@@ -37,3 +37,16 @@ for_each(wc, words.end(),
 ```
 捕获列表为空，因为我们只对lambda所在函数中定义的(非static)变量使用捕获列表。一个lambda可以直接使用定义在函数之外的名字。
 此例中使用cout,但是cout 并不在捕获列表中，而是定义在头文件iostream中，因此只要for_each出现的作用域包含了头文件iostream,我们lambda就可以使用它.
+
+#### 值捕获
+与参数不同，被捕获的变量的值是在lambda创建时copy， 不是调用时copy.
+```c
+void fcnl()
+{
+    size_t v1 = 42;
+    //将v1变量copy到名为f的可调用对象
+    auto f = [v1] {return v1;};
+    v1 = 0;
+    std::cout << f(); // 输出为42， f保存了我们创建它时v1的拷贝
+}
+```
