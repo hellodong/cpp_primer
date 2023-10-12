@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 	txtDecode.dump();
 	txtDecode.copy(words);
 
-	std::for_each(words.begin(), words.end(), std::bind(print, std::ref(std::cout), std::placeholders::_1, ' '));
+	for_each(words.begin(), words.end(), std::bind(print, std::ref(std::cout), std::placeholders::_1, ' '));
 
 	return 0;
 }

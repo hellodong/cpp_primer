@@ -11,7 +11,7 @@ size_t TextDecode::word_get(const char ch_arr[])
 	int start = 0;
 	for(int idx = 0;idx < strlen(ch_arr) + 1;idx++)
 	{
-		if (ch_arr[idx] == ' ' || ch_arr[idx] == '\0' )
+		if (ch_arr[idx] == ' ' || ch_arr[idx] == '\r' )
 		{
 			words.push_back(std::string(ch_arr+start, idx - start));
 			start = idx + 1;
