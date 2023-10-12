@@ -64,10 +64,30 @@ void func2()
 v1之前 **&** 指出v1应该以引用方式捕获。我们采用引用方式捕获一个变量，就必须确保被引用的对象在lambda执行的时候是存在的。我们可以从一个函数返回lambda。如果函数返回一个lambda,则函数不能返回一个局部变量的引用类似，lambda也不能包含引用捕获。
 
 ### 参数绑定
-传递一个长度参数问题，使用一个新的名为**bind**的标准函数，定义在functional头文件中.调用bind的一般形式为:
+传递一个长度参数问题，使用一个新的名为**bind**的标准函数，定义在*functional*头文件中.调用bind的一般形式为:
 ```c
 auto newCallable = std::bind(callable, arg_list)
 ```
 - *nesCallable*, 一个可调用对象，理解成函数就好
 - *arg_list*, 逗号分隔的参数列表，对应给定的callable的参数
+- _1,_2 为**arg_list**传入参数，其在std::placeholders 命名空间: std::placeholders::_1, std::placeholders::_2
+```cxx
+int check_size(const std::string &str, int sz)
+{
+    return str.size() > sz;
+}
+
+auto wc = std::find_if(words.begin(), words.end(), std::bind(check_size, std::placeholders::_1, 4));
+```
+##### 绑定引用参数
+如果我们希望传递给**bind**一个对象而不拷贝它，就必须使用**ref**函数， 其定义在functional头文件中
+```CPP
+std::ostream &print(std::ostream &os, std::string &str, char c)
+{
+    os << str << c ;
+}
+
+for_each(words.begin(), words.end(), std::bind(print, std::ref(std::cout), std::placeholders::_1, ' '));
+```
+函数*ref* 返回一个对象，包含给定的引用，此对象是可以拷贝的。还有一个**cref**, 生成一个保存const引用的类, 也定义在functional头文件中。
 
