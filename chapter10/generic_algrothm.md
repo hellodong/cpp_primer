@@ -63,3 +63,11 @@ void func2()
 ```
 v1之前 **&** 指出v1应该以引用方式捕获。我们采用引用方式捕获一个变量，就必须确保被引用的对象在lambda执行的时候是存在的。我们可以从一个函数返回lambda。如果函数返回一个lambda,则函数不能返回一个局部变量的引用类似，lambda也不能包含引用捕获。
 
+### 参数绑定
+传递一个长度参数问题，使用一个新的名为**bind**的标准函数，定义在functional头文件中.调用bind的一般形式为:
+```c
+auto newCallable = std::bind(callable, arg_list)
+```
+- *nesCallable*, 一个可调用对象，理解成函数就好
+- *arg_list*, 逗号分隔的参数列表，对应给定的callable的参数
+
