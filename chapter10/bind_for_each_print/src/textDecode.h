@@ -7,7 +7,7 @@
 
 class TextDecode {
 	public:
-		TextDecode(const std::string &path )
+		TextDecode(std::string &path)
 		{
 			input.open(path, std::ios::in);
 		}
