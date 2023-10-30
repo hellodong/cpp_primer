@@ -14,12 +14,16 @@ else()
     message("build type: ${CMAKE_BUILD_TYPE}")
 endif()
 
+add_executable(gen_data		src/gen_odd_even.cpp)
 add_executable(lst_merge 	src/lst_merge.cpp)
+add_executable(lst_splice 	src/lst_splice.cpp)
 
+target_compile_features(gen_data PUBLIC cxx_auto_type)
 target_compile_features(lst_merge PUBLIC cxx_auto_type)
+target_compile_features(lst_splice PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS lst_merge
+install(TARGETS gen_data lst_merge lst_splice
 	RUNTIME DESTINATION usr/bin)
 
