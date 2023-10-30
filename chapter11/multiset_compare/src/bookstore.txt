@@ -1,0 +1,5 @@
+cpp_primer 1 128.00
+effective_c++ 1 56.00
+cpp_primer 5 96.00
+effective_c++ 10 40.00
+
