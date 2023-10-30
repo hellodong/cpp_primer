@@ -1,0 +1,27 @@
+
+
+#include <map>
+#include <fstream>
+#include <iterator>
+#include <string>
+#include <iostream>
+
+
+int main(int argc, char *argv[])
+{
+	std::ifstream file(argv[1]);
+	std::istream_iterator<std::string> input(file), eof;
+	std::map<std::string, size_t> word_count;
+
+	while (input != eof)
+	{
+		std::cout <<" " << *input;
+		word_count[*input++]++;
+	}
+	std::cout << "\n" << std::endl;
+	for (const auto &w:word_count)
+	{
+		std::cout << w.first << " occurs " << w.second << " times" << std::endl;
+	}
+	return 0;
+}
