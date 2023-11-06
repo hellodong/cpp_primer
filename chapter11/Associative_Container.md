@@ -78,6 +78,49 @@
  为了指定使用自定义的操作，必须在定义关联容器类型时提供操作的类型。自定义的操作类型必须在尖括号中紧跟着元素类型给出。[代码实现](./multiset_compare/src/)
 
  在尖括号中出现的每个类型，就仅仅是一个类型而已。当我们出现一个容器时，才会以构造函数参数的形式提供真正的比较操作。例如，我们不能直接定义一个Sales_data的multiset,因为Sales_data没有<运算符
+ #### pair类型
+ **pair**的标准库类型定义在头文件 \<utility\>中
+ 
+ pair 的数据成员是public的，两个成员分别命名为**first和second**。我们可以用普通的成员访问符号就可以访问它们.
+ ```c++
+ std::cout << w.first << " occurs " << w.second << std::endl;
+ ```
+ 标准库定义了有限的几个pair操作
+
+|||
+|--------|-----|
+|pair<T1,T2> p|p是一个pair类型，两个类型分别为T1和T2的成员都进行了值初始化|
+|pair<T1,T2> p(v1,v2)|p是一个成员类型为T1和T2的pair;first和second成员分别用v1和v2进行初始化|
+|make_pair(v1, v2)|返回一个用v1和v2初始化的pair。pair类型从v1和v2类型推断出来|
+##### 创建pair对象的函数
+一个函数需要返回一个pair。在新标准下,我们可以对返回值进行列表初始化
+```c++
+std::pair<std::string, int> process (std::vector<std::string> &v)
+{
+    if (!v.empty())
+    {
+        return {v.back(), v.back().size()};  // 列表初始化
+    }
+    else
+    {
+        return std::pair<std::string, int>(); // 隐式构造返回值
+    }
+}
+```
+较早版本不允许用花括号包围的初始化来返回pair这种类型对象，必须显示返回：
+```C++
+ if (!v.empty())
+    {
+        return std::pair<std::string, int> (v.back(), v.back().size());  // 列表初始化
+    }
+```
+或者还可以用make_pair 来生成pair对象，pair的类型来自make_pair的参数:
+```C++
+if (!v.empty())
+{
+    return make_pair(v.back(), v.back().size());
+}
+```
 
  
 
