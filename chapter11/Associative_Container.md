@@ -187,3 +187,16 @@ if (set_it != iset.end())
 }
 ```
 [代码实现](./associateveContainerOper/src/set_iterator.cpp)
+##### 遍历关联容器
+初始化迭代器map_it,指向word_count中的首元素。只要迭代器不等于end, 就打印当前元素并递增迭代器。解引用map_it来获得pair成员。
+```C++
+ auto map_it = word_count.begin();
+ while(map_it != word_count.end())
+ {
+    std::cout << map_it->first;  // 解引用迭代器，打印关键字-值对
+    std::cout << " " << map_it->second<< std::endl;
+    map_it++; // 递增迭代器，移动到下一个元素
+ }
+```
+[代码实现](./associateveContainerOper/src/traversal_map.cpp)
+
