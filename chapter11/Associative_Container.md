@@ -177,3 +177,13 @@ map<string, int>::mapped_type v5; //v5是一个int
 [代码实现](./associateveContainerOper/src/map_iterator.cpp)
 - 一个map的value_type是一个pair,我们可以改变pair的值，但不能改变关键字的值
 ##### set的迭代器是const的
+set类型同时定义了iterator和const_iterator类型,但这两种类型都只允许只读访问set中的元素。一个set中的关键字也是const的。
+```C++
+std::set<int> iset{1,2,3,4,5,6,7};
+std::set::iterator set_it = iset.begin();
+if (set_it != iset.end())
+{
+    *set_it = 42;       //错误，set中的关键字是只读的
+}
+```
+[代码实现](./associateveContainerOper/src/set_iterator.cpp)
