@@ -15,11 +15,13 @@ else()
 endif()
 
 add_executable(map_it 	src/map_iterator.cpp)
+add_executable(set_it 	src/set_iterator.cpp)
 
 target_compile_features(map_it PUBLIC cxx_auto_type)
+target_compile_features(set_it PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS map_it
+install(TARGETS map_it set_it
 	RUNTIME DESTINATION usr/bin)
 
