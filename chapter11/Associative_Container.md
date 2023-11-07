@@ -166,3 +166,14 @@ map<string, int>::mapped_type v5; //v5是一个int
 ```
 我们使用作用域运算符提取一个类型的成员,例如: map<string, int>::key_type
 #### 关联容器迭代器
+解引用关联容器迭代器时，会得到一个类型为容器的value_type的值引用。对map而言，value_type是一个pair类型，first成员保存const的关键字，second成员保存值：
+```C++
+    auto map_it = word_count.begin();       // *map_it 是指向一个pair<std::sting, size_t> 对象的引用
+    std::cout << map_it->first;             // 打印此元素的关键字
+    std::cout << " " << map_it->second;     // 打印此元素的值
+    map_it->first = "new key";              // 错误， 关键字是const的
+    ++map_it->second;                       // 正确，我们可以通过迭代器改变元素  
+```
+[代码实现](./associateveContainerOper/src/map_iterator.cpp)
+- 一个map的value_type是一个pair,我们可以改变pair的值，但不能改变关键字的值
+##### set的迭代器是const的
