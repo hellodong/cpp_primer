@@ -166,3 +166,37 @@ map<string, int>::mapped_type v5; //v5是一个int
 ```
 我们使用作用域运算符提取一个类型的成员,例如: map<string, int>::key_type
 #### 关联容器迭代器
+解引用关联容器迭代器时，会得到一个类型为容器的value_type的值引用。对map而言，value_type是一个pair类型，first成员保存const的关键字，second成员保存值：
+```C++
+    auto map_it = word_count.begin();       // *map_it 是指向一个pair<std::sting, size_t> 对象的引用
+    std::cout << map_it->first;             // 打印此元素的关键字
+    std::cout << " " << map_it->second;     // 打印此元素的值
+    map_it->first = "new key";              // 错误， 关键字是const的
+    ++map_it->second;                       // 正确，我们可以通过迭代器改变元素  
+```
+[代码实现](./associateveContainerOper/src/map_iterator.cpp)
+- 一个map的value_type是一个pair,我们可以改变pair的值，但不能改变关键字的值
+##### set的迭代器是const的
+set类型同时定义了iterator和const_iterator类型,但这两种类型都只允许只读访问set中的元素。一个set中的关键字也是const的。
+```C++
+std::set<int> iset{1,2,3,4,5,6,7};
+std::set::iterator set_it = iset.begin();
+if (set_it != iset.end())
+{
+    *set_it = 42;       //错误，set中的关键字是只读的
+}
+```
+[代码实现](./associateveContainerOper/src/set_iterator.cpp)
+##### 遍历关联容器
+初始化迭代器map_it,指向word_count中的首元素。只要迭代器不等于end, 就打印当前元素并递增迭代器。解引用map_it来获得pair成员。
+```C++
+ auto map_it = word_count.begin();
+ while(map_it != word_count.end())
+ {
+    std::cout << map_it->first;  // 解引用迭代器，打印关键字-值对
+    std::cout << " " << map_it->second<< std::endl;
+    map_it++; // 递增迭代器，移动到下一个元素
+ }
+```
+[代码实现](./associateveContainerOper/src/traversal_map.cpp)
+
