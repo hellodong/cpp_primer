@@ -200,3 +200,49 @@ if (set_it != iset.end())
 ```
 [代码实现](./associateveContainerOper/src/traversal_map.cpp)
 
+#### 添加元素
+关联容器insert成员向容器添加一个元素或一个元素范围。map和set包含不重复关键字，插入一个已存在元素对容器没影响。
+```C++
+vector<int> ivec={2,4,6,8,10};
+set<int>set2:
+set2.insert(ivec.begin(), ivec.end());
+set2.insert({1,2,3,4,5,6,7,8,9});
+```
+[代码实现](./associateveContainerOper/src/set_insert.cpp)
+
+##### 向map添加元素
+对一个map进行insert操作时，元素类型必须是pair。可以在insert参数列表中创建一个pair:
+```C++
+word_count.insert({word,1});
+word_count.insert(std::make_pair(word,1));
+word_count.insert(std::map<string, size_t>(word,1));
+word_count.insert(std::map<string, size_t>::value_type(word,1));
+```
+
+<table>
+    <tr>
+        <td colspan="2">       关联容器inset操作</td>
+    </tr>
+    <tr>
+        <td>c.insert(v)</td>
+        <td rowspan="2">v是value_type的类型对象;args是用来构造一个元素<br>只有当元素关键字不在c中才插入。</td>
+    </tr>
+    <tr>
+        <td>c.emplace(args)</td>
+    </tr>
+    <tr>
+        <td>c.insert(b,e)</td>
+        <td rowspan="2"></td>
+    </tr>
+    <tr>
+        <td>c.insert(il)</td>
+    </tr>
+    <tr>
+        <td>c.insert(p,v)</td>
+        <td rowspan="2"></td>
+    </tr>
+    <tr>
+        <td>c.emplace(p,args)</td>
+    </tr>
+</table>
+
