@@ -19,15 +19,17 @@ add_executable(set_it 	src/set_iterator.cpp)
 add_executable(traversal_map 	src/traversal_map.cpp)
 add_executable(set_insert 	src/set_insert.cpp)
 add_executable(map_insert 	src/map_insert.cpp)
+add_executable(map_insert_rtn 	src/map_insert_rtn.cpp)
 
 target_compile_features(map_it PUBLIC cxx_auto_type)
 target_compile_features(set_it PUBLIC cxx_auto_type)
 target_compile_features(traversal_map PUBLIC cxx_auto_type)
 target_compile_features(set_insert PUBLIC cxx_auto_type)
 target_compile_features(map_insert PUBLIC cxx_auto_type)
+target_compile_features(map_insert_rtn PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS map_it set_it traversal_map set_insert map_insert
+install(TARGETS map_it set_it traversal_map set_insert map_insert map_insert_rtn
 	RUNTIME DESTINATION usr/bin)
 

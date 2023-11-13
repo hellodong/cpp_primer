@@ -218,10 +218,11 @@ word_count.insert(std::make_pair(word,1));
 word_count.insert(std::map<string, size_t>(word,1));
 word_count.insert(std::map<string, size_t>::value_type(word,1));
 ```
+[代码实现](./associateveContainerOper/src/map_insert.cpp)
 
 <table>
     <tr>
-        <td colspan="2">       关联容器inset操作</td>
+        <th colspan="2" align="right">关联容器inset操作</th>
     </tr>
     <tr>
         <td>c.insert(v)</td>
@@ -232,17 +233,33 @@ word_count.insert(std::map<string, size_t>::value_type(word,1));
     </tr>
     <tr>
         <td>c.insert(b,e)</td>
-        <td rowspan="2"></td>
+        <td rowspan="2"> b和e是迭代器，表示一个c::value_type类型值的范围；<br>il是这种值的花括号列表。return void</td>
     </tr>
     <tr>
         <td>c.insert(il)</td>
     </tr>
     <tr>
         <td>c.insert(p,v)</td>
-        <td rowspan="2"></td>
+        <td rowspan="2">类似insert(v),但将迭代器p作为一个提示，指出从哪里开始搜索新元素应该存储的位置。<br>返回一个迭代器，指向具有给定关键字的元素</td>
     </tr>
     <tr>
         <td>c.emplace(p,args)</td>
     </tr>
 </table>
+
+##### 检测insert的返回值
+添加单一元素的insert和emplace版本返回一个pair,告诉我们插入操作是否成功。pair的first成员是一个迭代器，指向具有给定关键字的元素;second成员是一个bool值，指出插入元素是否执行成功。作为一个例子，我们用insert重写单词计数程序:
+```C++
+// 统计每个单词在输入中出现次数
+map<string, size_t> word_count;
+string word;
+while(cin >> word)
+{
+    auto ret = word_count.insert({word, 1});
+    if (!ret.second)
+    {
+        ++ret.first->second;
+    }
+}
+```
 
