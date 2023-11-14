@@ -222,7 +222,7 @@ word_count.insert(std::map<string, size_t>::value_type(word,1));
 
 <table>
     <tr>
-        <th colspan="2" align="right">关联容器inset操作</th>
+        <th colspan="2" align="left">关联容器inset操作</th>
     </tr>
     <tr>
         <td>c.insert(v)</td>
@@ -262,4 +262,36 @@ while(cin >> word)
     }
 }
 ```
+##### 删除元素
+关联容器定义了三个版本erase, 通过传递erase一个迭代器或迭代器对来删除一个元素或一个元素范围。这两个版本erase与对应顺序容器操作非常相似：指定元素被删除，返回void。
+
+关联容器提供额外的erase操作，接受一个key_type参数。此版本删除所有匹配给定关键字元素，返回实际删除元素的数量。我们用此版本打印结果之前从word_count中删除特定单词：
+```C++
+// 删除一个关键字，返回删除元素数量
+if (word_counte.erase(removal_word))
+{
+    cout << "OK:" << removal_word << " removed" << endl;
+}
+else
+{
+    cout << "oops: " << removal_word << " not found" << endl;
+}
+```
+对于保存不重复关键字的容器，erase的返回值总是0或1。若返回值为0，则表明想要删除的元素并不在容器中。
+<table>
+    <tr> 
+        <th colspan="2" align="left"> 从关联容器删除元素 </th> 
+    </tr>
+    <tr>
+        <td>c.erase(k)</td> 
+        <td>从c中删除每个关键字为k的元素。返回一个size_type值，指出删除的元素数量</td>
+    </tr>
+        <td>c.erase(p)</td>
+        <td>从c中删除迭代器p指定的元素。p必须指向c中一个真实元素，不能等于c.end()。<br>返回一个指向p之后元素的迭代器，若p指向c中尾元素，则返回c.end()</td>
+    <tr>
+        <td>c.erase(b,e)</td>
+        <td>删除迭代器对b和e所表示的范围中的元素。返回e</td>
+    </tr>
+</table>
+
 
