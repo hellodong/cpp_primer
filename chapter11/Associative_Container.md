@@ -294,4 +294,41 @@ else
     </tr>
 </table>
 
+#### map的下标操作
+**map**和**unordered_map**容器提供了下标运算符和一个对应的at函数。**set**类型不支持下标，因为"set"中没有与关键字相关联的"值"。我们不能对multimap和unordered_multimap进行下标操作，因为这些容器中可能有多值与一个关键字相关联
+
+map下标运算接受一个索引，获取与此关键字相关联的值。与其他下标运算符不同的是，如果关键字不在map中，会为它创建一个元素并插入到map中，关联值将进行初始化
+```C++
+map<string, size_t> word_count; //map 为空
+word_count["Anna"] = 1;//插入一个关键字为Anna的元素，关联值进行值初始化；然后将1赋值
+```
+进行如下操作:
+- 在word_count中搜索关键字为Anna的元素，未找到
+- 将一个新的关键字-值对插入到word_count中。关键字是一个const string,保存Anna.值进行初始化，本例中意味值为0
+- 提取出新插入的元素，并将值1赋予它
+
+由于下标运算符可能插入一个新元素，我们只可以对非const的map进行下标操作。
+<table>
+    <tr>
+        <th colspan="2" align="left">map和unordered_map下标操作</th>
+    </tr>
+    <tr>
+        <td>c[k]</td>
+        <td>返回关键字为k的元素；如果k不在c中，添加一个关键字为k的元素，对其初始化</td>
+    </tr>
+    <tr>
+        <td>c.at(k)</td>
+        <td>访问关键字为k的元素，带参数检查；若k不在c中，抛出一个out_of_range异常</td>
+    </tr>
+</table>
+
+##### 使用下标操作的返回值
+map的下标运算符与我们用过的其他下标运算符的另一个不同之处是返回类型。map进行下标操作时，会获得一个mapped_type对象；当解引用一个map迭代器时，会得到一个value_type对象。
+
+与其他下标运算不同的是，map的下标运算返回一个左值。返回的左值，我们既可以读也可以写元素:
+```C++
+cout << word_count["Anna"]; // 用Anna作为下标提取元素，输出为1
+++word_count["Anna"];       // 提取元素，增1
+cout << word_count["Anna"]; // 提取元素并打印，输出为2
+```
 
