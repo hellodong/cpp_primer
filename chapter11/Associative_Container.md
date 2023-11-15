@@ -200,3 +200,186 @@ if (set_it != iset.end())
 ```
 [代码实现](./associateveContainerOper/src/traversal_map.cpp)
 
+#### 添加元素
+关联容器insert成员向容器添加一个元素或一个元素范围。map和set包含不重复关键字，插入一个已存在元素对容器没影响。
+```C++
+vector<int> ivec={2,4,6,8,10};
+set<int>set2:
+set2.insert(ivec.begin(), ivec.end());
+set2.insert({1,2,3,4,5,6,7,8,9});
+```
+[代码实现](./associateveContainerOper/src/set_insert.cpp)
+
+##### 向map添加元素
+对一个map进行insert操作时，元素类型必须是pair。可以在insert参数列表中创建一个pair:
+```C++
+word_count.insert({word,1});
+word_count.insert(std::make_pair(word,1));
+word_count.insert(std::map<string, size_t>(word,1));
+word_count.insert(std::map<string, size_t>::value_type(word,1));
+```
+[代码实现](./associateveContainerOper/src/map_insert.cpp)
+
+<table>
+    <tr>
+        <th colspan="2" align="left">关联容器inset操作</th>
+    </tr>
+    <tr>
+        <td>c.insert(v)</td>
+        <td rowspan="2">v是value_type的类型对象;args是用来构造一个元素<br>只有当元素关键字不在c中才插入。</td>
+    </tr>
+    <tr>
+        <td>c.emplace(args)</td>
+    </tr>
+    <tr>
+        <td>c.insert(b,e)</td>
+        <td rowspan="2"> b和e是迭代器，表示一个c::value_type类型值的范围；<br>il是这种值的花括号列表。return void</td>
+    </tr>
+    <tr>
+        <td>c.insert(il)</td>
+    </tr>
+    <tr>
+        <td>c.insert(p,v)</td>
+        <td rowspan="2">类似insert(v),但将迭代器p作为一个提示，指出从哪里开始搜索新元素应该存储的位置。<br>返回一个迭代器，指向具有给定关键字的元素</td>
+    </tr>
+    <tr>
+        <td>c.emplace(p,args)</td>
+    </tr>
+</table>
+
+##### 检测insert的返回值
+添加单一元素的insert和emplace版本返回一个pair,告诉我们插入操作是否成功。pair的first成员是一个迭代器，指向具有给定关键字的元素;second成员是一个bool值，指出插入元素是否执行成功。作为一个例子，我们用insert重写单词计数程序:
+```C++
+// 统计每个单词在输入中出现次数
+map<string, size_t> word_count;
+string word;
+while(cin >> word)
+{
+    auto ret = word_count.insert({word, 1});
+    if (!ret.second)
+    {
+        ++ret.first->second;
+    }
+}
+```
+##### 删除元素
+关联容器定义了三个版本erase, 通过传递erase一个迭代器或迭代器对来删除一个元素或一个元素范围。这两个版本erase与对应顺序容器操作非常相似：指定元素被删除，返回void。
+
+关联容器提供额外的erase操作，接受一个key_type参数。此版本删除所有匹配给定关键字元素，返回实际删除元素的数量。我们用此版本打印结果之前从word_count中删除特定单词：
+```C++
+// 删除一个关键字，返回删除元素数量
+if (word_counte.erase(removal_word))
+{
+    cout << "OK:" << removal_word << " removed" << endl;
+}
+else
+{
+    cout << "oops: " << removal_word << " not found" << endl;
+}
+```
+对于保存不重复关键字的容器，erase的返回值总是0或1。若返回值为0，则表明想要删除的元素并不在容器中。
+<table>
+    <tr> 
+        <th colspan="2" align="left"> 从关联容器删除元素 </th> 
+    </tr>
+    <tr>
+        <td>c.erase(k)</td> 
+        <td>从c中删除每个关键字为k的元素。返回一个size_type值，指出删除的元素数量</td>
+    </tr>
+        <td>c.erase(p)</td>
+        <td>从c中删除迭代器p指定的元素。p必须指向c中一个真实元素，不能等于c.end()。<br>返回一个指向p之后元素的迭代器，若p指向c中尾元素，则返回c.end()</td>
+    <tr>
+        <td>c.erase(b,e)</td>
+        <td>删除迭代器对b和e所表示的范围中的元素。返回e</td>
+    </tr>
+</table>
+
+#### map的下标操作
+**map**和**unordered_map**容器提供了下标运算符和一个对应的at函数。**set**类型不支持下标，因为"set"中没有与关键字相关联的"值"。我们不能对multimap和unordered_multimap进行下标操作，因为这些容器中可能有多值与一个关键字相关联
+
+map下标运算接受一个索引，获取与此关键字相关联的值。与其他下标运算符不同的是，如果关键字不在map中，会为它创建一个元素并插入到map中，关联值将进行初始化
+```C++
+map<string, size_t> word_count; //map 为空
+word_count["Anna"] = 1;//插入一个关键字为Anna的元素，关联值进行值初始化；然后将1赋值
+```
+进行如下操作:
+- 在word_count中搜索关键字为Anna的元素，未找到
+- 将一个新的关键字-值对插入到word_count中。关键字是一个const string,保存Anna.值进行初始化，本例中意味值为0
+- 提取出新插入的元素，并将值1赋予它
+
+由于下标运算符可能插入一个新元素，我们只可以对非const的map进行下标操作。
+<table>
+    <tr>
+        <th colspan="2" align="left">map和unordered_map下标操作</th>
+    </tr>
+    <tr>
+        <td>c[k]</td>
+        <td>返回关键字为k的元素；如果k不在c中，添加一个关键字为k的元素，对其初始化</td>
+    </tr>
+    <tr>
+        <td>c.at(k)</td>
+        <td>访问关键字为k的元素，带参数检查；若k不在c中，抛出一个out_of_range异常</td>
+    </tr>
+</table>
+
+##### 使用下标操作的返回值
+map的下标运算符与我们用过的其他下标运算符的另一个不同之处是返回类型。map进行下标操作时，会获得一个mapped_type对象；当解引用一个map迭代器时，会得到一个value_type对象。
+
+与其他下标运算不同的是，map的下标运算返回一个左值。返回的左值，我们既可以读也可以写元素:
+```C++
+cout << word_count["Anna"]; // 用Anna作为下标提取元素，输出为1
+++word_count["Anna"];       // 提取元素，增1
+cout << word_count["Anna"]; // 提取元素并打印，输出为2
+```
+#### 访问元素
+如果我们所关心的只不过是一个特定元素是否已在容器中，find是最佳选择。对于允许重复关键字的容器，count还会做更多的工作：如果元素在容器中，还会统计有多少个元素相同的关键字：
+```C++
+set<int> iset{0,1,2,3,4,5,6,7,8,9};
+iset.find(1);  //返回一个迭代器，指向key == 1的元素
+iset.find(11); // 返回一个迭代器，其值等于iset.end()
+iset.count(1); // 返回1
+iset.count(0); // 返回0
+```
+[代码实现](./associateveContainerOper/src/set_access_element.cpp)
+<table>
+    <tr>
+        <th colspan="2">在一个关联容器中查找元素的操作</th>
+    </tr>
+    <tr>
+        <td colspan="2">lower_bound和upper_bound不适用无序容器</td>
+    </tr>
+    <tr>
+        <td colspan="2">下标和at操作只使用与非const和map,unordered_map</td>
+    </tr>
+    <tr>
+        <td>c.find(k)</td>
+        <td>返回一个迭代器，指向第一个关键字为k的元素，若k不在容器中，则返回尾后迭代器</td>
+    </tr>
+    <tr>
+        <td>c.count(k)</td>
+        <td>返回关键字等于k的元素的数量，对于不允许重复关键字的容器，返回值永远是0或者1</td>
+    </tr>
+    <tr>
+        <td>c.lower_bound(k)</td>
+        <td>返回一个迭代器，指向第一个关键字不小于k的元素</td>
+    </tr>
+    <tr>
+        <td>c.upper_bound(k)</td>
+        <td>返回一个迭代器，指向第一个关键字大于k的元素</td>
+    </tr>
+    <tr>
+        <td>c.equal_range(k)</td>
+        <td>返回一个迭代器pair,表示关键字等于k的元素范围。<br>若k不存在，pair的两个成员钧等于c.end()</td>
+    </tr>
+</table>
+有时我们只想知道一个给定关键字是否在map中，不想改变map。这样就不能使用下标运算符来检查一个元素是否存在，因为如果关键字不存在的话，下标运算符会插入一个新元素。在这种情况下，应该使用find:
+
+```C++
+if (word_count.find("foobar") == word_count.end())
+{
+    cout << "foobar is not in the map" << endl;
+}
+```
+[代码实现](./associateveContainerOper/src/map_find_instead_index.cpp)
+
+
