@@ -331,4 +331,55 @@ cout << word_count["Anna"]; // 用Anna作为下标提取元素，输出为1
 ++word_count["Anna"];       // 提取元素，增1
 cout << word_count["Anna"]; // 提取元素并打印，输出为2
 ```
+#### 访问元素
+如果我们所关心的只不过是一个特定元素是否已在容器中，find是最佳选择。对于允许重复关键字的容器，count还会做更多的工作：如果元素在容器中，还会统计有多少个元素相同的关键字：
+```C++
+set<int> iset{0,1,2,3,4,5,6,7,8,9};
+iset.find(1);  //返回一个迭代器，指向key == 1的元素
+iset.find(11); // 返回一个迭代器，其值等于iset.end()
+iset.count(1); // 返回1
+iset.count(0); // 返回0
+```
+[代码实现](./associateveContainerOper/src/set_access_element.cpp)
+<table>
+    <tr>
+        <th colspan="2">在一个关联容器中查找元素的操作</th>
+    </tr>
+    <tr>
+        <td colspan="2">lower_bound和upper_bound不适用无序容器</td>
+    </tr>
+    <tr>
+        <td colspan="2">下标和at操作只使用与非const和map,unordered_map</td>
+    </tr>
+    <tr>
+        <td>c.find(k)</td>
+        <td>返回一个迭代器，指向第一个关键字为k的元素，若k不在容器中，则返回尾后迭代器</td>
+    </tr>
+    <tr>
+        <td>c.count(k)</td>
+        <td>返回关键字等于k的元素的数量，对于不允许重复关键字的容器，返回值永远是0或者1</td>
+    </tr>
+    <tr>
+        <td>c.lower_bound(k)</td>
+        <td>返回一个迭代器，指向第一个关键字不小于k的元素</td>
+    </tr>
+    <tr>
+        <td>c.upper_bound(k)</td>
+        <td>返回一个迭代器，指向第一个关键字大于k的元素</td>
+    </tr>
+    <tr>
+        <td>c.equal_range(k)</td>
+        <td>返回一个迭代器pair,表示关键字等于k的元素范围。<br>若k不存在，pair的两个成员钧等于c.end()</td>
+    </tr>
+</table>
+有时我们只想知道一个给定关键字是否在map中，不想改变map。这样就不能使用下标运算符来检查一个元素是否存在，因为如果关键字不存在的话，下标运算符会插入一个新元素。在这种情况下，应该使用find:
+
+```C++
+if (word_count.find("foobar") == word_count.end())
+{
+    cout << "foobar is not in the map" << endl;
+}
+```
+[代码实现](./associateveContainerOper/src/map_find_instead_index.cpp)
+
 
