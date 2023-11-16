@@ -1,4 +1,5 @@
 ## Associative Container
+[TOC]
 
  关联容器支持高效的关键字查找与访问.两个主要的关联容器，类型是**map**与**set**。标准库提供8个关联容器，体现在三个维度上:
 
@@ -53,7 +54,9 @@
 
 ```
 
- 此程序与前程序不同在于，我们检查单词是否在指定集合中。find()调用返回一个迭代器，如果关键字在set集合中，迭代器指向关键字，否则find返回尾迭代器。[代码实现](./using_map_set/src/use_set.cpp)
+ 此程序与前程序不同在于，我们检查单词是否在指定集合中。find()调用返回一个迭代器，如果关键字在set集合中，迭代器指向关键字，否则find返回尾迭代器。
+ 
+ [代码实现](./using_map_set/src/use_set.cpp)
 
 #### 定义关联容器
 
@@ -381,5 +384,56 @@ if (word_count.find("foobar") == word_count.end())
 }
 ```
 [代码实现](./associateveContainerOper/src/map_find_instead_index.cpp)
+
+##### 在multimap和multiset中查找元素
+如果一个multimap和multiset中有多个元素具有给定关键字，则这些元素在容器中会相邻存放。打印一个特定作者所有著作，可以用三种方法解决这个问题。最直观用count和find:
+```C++
+string search_item("Stanley Lippman");
+auto entries = authors.count(search_item);  // 元素的数量
+auto iter = authors.find(search_item);      // 此作者第一本书
+while(entries)
+{
+    cout << iter->second << endl;   // 打印书名
+    entries--;
+    iter++;                         // 迭代到下一本书
+}
+```
+count确定此作者共有多少本书，调用find获得一个迭代器，指向第一个关键字为此作者的元素。如果count 返回0， 则循环一次也不执行。
+
+我们可以用lower_bound和upper_bound来解决此问题。这两个操作都接受一个关键字，返回一个迭代器。如果关键字在容器中，lower_bound返回的迭代器指向第一个具有给定关键字的元素，而upper_bound返回的迭代器指向最后一个匹配给定关键字元素之后的位置。如果元素不在multimap中，lower_bound和upper_bound返回相等的迭代器===>相同关键字调用lower_bound和upper_bound得到一个具有该关键字元素的范围。
+
+如果我们查找元素具有最大关键字，则此关键字的upper_bound返回尾后迭代器。如果关键字不存在，且大于容器中任何关键字，则lower_bound返回的也是尾后迭代器。
+
+```C++
+string search_item("Stanley Lippman");
+//start和end 表示对应作者的元素范围
+for(auto start=authors.lower_bound(search_item)，end = authors.upper_bound(search_item);start != end;start++)
+{
+    cout << beg->second << endl;
+}
+```
+lower_bound的调用将start定位到第一个与search_item匹配的元素(如果存在)。如果容器中没有这样元素，start指向第一个关键字大于search_item的元素，有可能是尾后迭代器。upper_bound调用将end指向最后一个匹配指定关键字元素之后的元素。这两个操作并不报告关键字是否存在，它们的返回值可作为一个迭代器范围。我们可以通过递增beg来遍历这些元素。
+
+- 如果lower_bound和upper_bound返回相同的迭代器，则给定关键字不在容器中.
+
+直接调用equal_range。此函数接受一个关键字，返回一个迭代器pair。若关键字存在，则第一个迭代器指向第一个与关键字匹配的元素，第二个迭代器指向最后一个匹配元素之后的位置。若未找到匹配元素，两个迭代器都指向关键字可以插入的位置。
+```C++
+//pos保存迭代器对，表示与关键字匹配的元素范围
+for (auto pos = authors.equal_range(search_item);pos.first != pos.second;pos.first++)
+{
+    cout << pos.first->second << ", ";
+}
+```
+此pair的first成员与lower_bound返回的迭代器是一样的，second成员与upper_bound的返回值是一样的。
+
+[代码实现](./associateveContainerOper/src/multimap_search.cpp)
+
+#### 一个单词转换的map
+展示map的创建，搜索以及遍历
+
+[代码实现](./associateveContainerOper/src/word_transfer.cpp)
+
+
+
 
 
