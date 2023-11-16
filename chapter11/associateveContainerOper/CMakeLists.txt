@@ -22,6 +22,7 @@ add_executable(map_insert 	src/map_insert.cpp)
 add_executable(map_insert_rtn 	src/map_insert_rtn.cpp)
 add_executable(access_element 	src/set_access_element.cpp)
 add_executable(find_instead_index src/map_find_instead_index.cpp)
+add_executable(multimap_search    src/multimap_search.cpp)
 
 target_compile_features(map_it PUBLIC cxx_auto_type)
 target_compile_features(set_it PUBLIC cxx_auto_type)
@@ -31,9 +32,10 @@ target_compile_features(map_insert PUBLIC cxx_auto_type)
 target_compile_features(map_insert_rtn PUBLIC cxx_auto_type)
 target_compile_features(access_element PUBLIC cxx_auto_type)
 target_compile_features(find_instead_index PUBLIC cxx_auto_type)
+target_compile_features(multimap_search PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS map_it set_it traversal_map set_insert map_insert map_insert_rtn access_element find_instead_index
+install(TARGETS map_it set_it traversal_map set_insert map_insert map_insert_rtn access_element find_instead_index multimap_search
 	RUNTIME DESTINATION usr/bin)
 
