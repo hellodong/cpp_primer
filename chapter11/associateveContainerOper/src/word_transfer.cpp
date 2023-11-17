@@ -33,8 +33,11 @@ bool buildMap(std::ifstream &map_file, std::map<std::string, std::string>& trans
     {
         if (value.size() > 1)
         {
-            size_t len = value.length();
-            trans_map[key] = value.substr(1, len - 2);   // 去掉前导空格
+            if (value[value.size() - 1] == '\r')
+            {
+                value.pop_back();
+            }
+            trans_map[key] = value.substr(1);   // 去掉前导空格
         }
         else 
         {

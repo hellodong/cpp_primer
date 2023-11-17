@@ -432,11 +432,94 @@ for (auto pos = authors.equal_range(search_item);pos.first != pos.second;pos.fir
 [代码实现](./associateveContainerOper/src/multimap_search.cpp)
 
 #### 一个单词转换的map
-展示map的创建，搜索以及遍历
+展示map的创建，搜索以及遍历。<br>单词转换规则如下:
+```txt
+brb br right back
+k okay?
+y why
+r are
+u you
+pic picture
+18r later
+```
+原始文本如下:
+```txt
+where r u
+y dont u send me a pic
+k thk 18r
+```
+翻译后输出如下:
+```txt
+where are you
+why dont you send me a picture
+okay? thanks! later
+```
+程序将使用三个函数：
+- word_transform 管理整个过程
+- buildMap 读取转换规则文件 
+- transform 接受一个string, 如果存在转换规则，返回转后的内容。
+
+管理整个过程函数体：
+```C++
+    std::ifstream rule_file(argv[1]), text_file(argv[2]);
+    std::map<std::string, std::string> trans_map;
+    buildMap(rule_file, trans_map);                 // 转换规则获取
+    std::string text;
+    while(std::getline(text_file, text))            // 读取一行输入
+    {
+        std::istringstream istream(text);           // 读取每个单词
+        std::string word;
+        while(istream >> word)                      
+        {
+            std::cout << transform(word, trans_map) << " "; // 打印输出
+        }
+        std::cout << std::endl;
+    }
+```
+
+函数首先调用buildMap生成单词转换map,将它保存在trans_map中。while循环使用getline一行一行读取输入文件。为了每行中获取单词，使用嵌套while循环，用一个istringstream来处理当前行中的每个单词。
+
+buildMap读入给定文件，建立转换映射:
+```C++
+bool buildMap(std::ifstream &map_file, std::map<std::string, std::string>& trans_map)
+{
+    std::string key, value;     // 转换单词和转换后的内容
+    // 读取第一个单词存入key中，行中剩余内容存入value
+    while(map_file >> key && std::getline(map_file, value))
+    {
+        if (value.size() > 1)       // 检查是否有转换规则
+        {
+            if (value[value.size() - 1] == '\r')    // 如果尾后是个回车符，则pop尾后字符
+            {
+                value.pop_back();
+            }
+            trans_map[key] = value.substr(1);   // 跳过前导空格
+        }
+        else 
+        {
+            throw std::runtime_error("no rule for " + key);
+        }
+    }
+    return true;
+}
+```
+map_file中每一行对应一条规则。每条规则由一个单词和一个短语组成。我们用>>读取要转换的单词，存入key，后调用getline读取这一行中剩余内容存入value。但getline不会跳过前导空格，需要我们自己处理key和value之间的空格。同时还要注意value尾后字符是否是回车符号，如果存在则需要擦除尾后回车符。
+
+我们使用下标符添加关键字-值对。我们隐含忽略了一个单词在转换文件中出现多次情况。如果真有单词出现多次情况，会将最后一个对应短语存入trans_map。
+
+transform进行实际的转换工作，如果string在map中，transform返回相应的短语。否则，transform直接返回原string：
+```C++
+const std::string& transform(const std::string &str, const std::map <std::string, std::string> &trans_map)
+{
+    auto mapped = trans_map.find(str);
+    if (mapped != trans_map.end())
+    {
+        return mapped->second;
+    }
+    return str;
+}
+
+```
+首先调用find确定给定string是否存在map中。存在，find返回一个指向对应元素迭代器。否则，find返回尾后迭代器。如果存在，我们解引用迭代器，获得一个保存关键字和值的pair，返回成员second。
 
 [代码实现](./associateveContainerOper/src/word_transfer.cpp)
-
-
-
-
-

@@ -1,4 +1,4 @@
-## Chapter 6 函数
+## Function
 
 ##### 函数声明
 
