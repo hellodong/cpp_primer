@@ -610,3 +610,30 @@ const std::string& transform(const std::string &str, const std::map <std::string
         <td>重组存储，使得c可以保存n个元素且不必rehash</td>
     </tr>
 </table>
+
+##### 无序容器对关键字类型的要求
+默认情况下，无序容器使用关键字类型的==运算符来比较元素，它们还是用一个hash<key_type>类型对象来生成每个元素的哈希值。标准库为内置类型(包括指针)提供了hash版本。还为一些标准库类型，包括string和智能指针类型定义了hash。<br>
+但是，我们不能直接定义关键字类型为自定义类类型的无序容器。与容器不同，不能直接使用hash模板，我们必须提供我们自己的hash版本。<br>
+还有另外一种方法，类似为有序容器重载关键字类型的默认比较操作。我们定义这些重载函数:
+```C++
+size_t hasher(const Sales_data &sd)
+{
+    return hash<string> () (sd.isbn());
+}
+
+bool equal_op(const Sales_data &lhs, const Sales_data &rhs)
+{
+    return lhs.isbn() == rhs.isbn();
+}
+```
+我们使用这些函数来定义一个unordered_multiset:
+```C++
+using SD_multiset = unordered_multiset<Sales_data, decltype(hasher)*, decltype(equal_op)*>;
+// 参数是桶大小、哈希函数指针和相等性判断运算符指针
+SD_multiset bookstore(64, hasher, equal_op);
+```
+如果我们的类定义了==运算符，则可以只重载哈希函数:
+```C++
+// 使用 FooHash生成hash值；Foo必须有==运算符
+unordered_set<Foo, decltype(FooHash)*> fooSet(10, FooHash);
+```
