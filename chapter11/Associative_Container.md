@@ -546,3 +546,67 @@ const std::string& transform(const std::string &str, const std::map <std::string
     }
     return 0;
 ```
+
+[代码实现](./unordered_map/src/use_unordered_map.cpp)
+
+##### 管理桶
+无序容器在存储上组织为一组桶，每个桶保存零个或多个元素。无序容器使用一个哈希函数将元素映射到桶。为了访问一个元素，容器首先计算元素的哈希值，指出应该在哪一个桶。容器将具有特定哈希值所有元素保存在相同桶中。如果容器允许重复关键字，所有具有相同关键字的元素也都会在同一桶中。<br>
+
+对于相同参数，哈希函数必定总是相同结果。理想情况下，哈希函数将每个特定值映射到唯一桶。但是对于不同关键字元素映射都保存在相同桶中也是允许的。当一个桶保存多个元素时，需要顺序搜索这些元素来查找我们想要的那个。计算一个元素的哈希值和在桶中搜索通常都是很快的操作。<br>
+无序容器提供了一组管理桶的函数:
+<table>
+    <tr>
+        <th colspan="2">无序容器管理操作</th>
+    </tr>
+        <td colspan="2">桶接口</td>
+    <tr>
+        <td>c.bucket_count()</td>
+        <td>正在使用桶的数量</td>
+    </tr>
+    <tr>
+        <td>c.max_bucket_count()</td>
+        <td>容器能容纳最多桶的数量</td>
+    </tr>
+    <tr>
+        <td>c.bucket_size(n)</td>
+        <td>第n个桶中有多少个元素</td>
+    </tr>
+    <tr>
+        <td colspan="2">桶迭代</td>
+    </tr>
+    <tr>
+        <td>local_iterator</td>
+        <td>可以用来访问桶中元素迭代器类型</td>
+    </tr>
+    <tr>
+        <td>const_local_iterator</td>
+        <td>桶迭代器const版本</td>
+    </tr>
+    <tr>
+        <td>c.begin(n), c.end(n)</td>
+        <td>桶n的首元素和尾迭代器</td>
+    </tr>
+    <tr>
+        <td>c.cbegin(n), c.cend(n)</td>
+        <td>与上两个函数类似，但返回const_local_iterator</td>
+    </tr>
+    <tr>
+        <td colspan="2">哈希策略</td>
+    </tr>
+    <tr>
+        <td>c.load_factor()</td>
+        <td>每个桶的平均元素数量，返回float值</td>
+    </tr>
+    <tr>
+        <td>c.max_load_factor()</td>
+        <td>c 试图维护平均桶大小，返回float值。c会在需要时<br>添加新的桶，以使得load_factor<=max_load_factor()</td>
+    </tr>
+    <tr>
+        <td>c.rehash(n)</td>
+        <td>重组存储，使得bucket_count >=n<br>且bucket_count > size/max_load_factor</td>
+    </tr>
+    <tr>
+        <td>c.reserve(n)</td>
+        <td>重组存储，使得c可以保存n个元素且不必rehash</td>
+    </tr>
+</table>
