@@ -523,3 +523,26 @@ const std::string& transform(const std::string &str, const std::map <std::string
 首先调用find确定给定string是否存在map中。存在，find返回一个指向对应元素迭代器。否则，find返回尾后迭代器。如果存在，我们解引用迭代器，获得一个保存关键字和值的pair，返回成员second。
 
 [代码实现](./associateveContainerOper/src/word_transfer.cpp)
+
+### 无序容器
+新标准定义了4个**无序关联容器**。这些容器不是用比较运算符组织元素，而是使用一个哈希函数和关键字类型==运算符。
+
+##### 使用无序容器
+除了hash操作，无序容器还提供了与有序容器相同操作(find、insert)。通常可以用一个无序容器替换对应有序操作
+
+```C++
+    std::ifstream input(argv[1]);
+    std::istream_iterator<std::string>  istream(input), eof;
+
+    std::unordered_map<std::string, size_t> word_count;
+    while(istream != eof)
+    {
+        ++word_count[*istream++];  // 提取并递增word计数器
+    }
+
+    for(const auto &w:word_count)   // 对map中的每个元素 打印结果
+    {
+        std::cout << w.first << " occours " << w.second <<" times" << std::endl;
+    }
+    return 0;
+```
