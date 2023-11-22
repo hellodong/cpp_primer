@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     std::cout << "second: " << map_it->second;
 	std::cout << std::endl;
 
-    for(const auto map_ref:word_count)
+    for(const auto &map_ref:word_count)
     {
         std::cout << map_ref.first <<" : " << map_ref.second << std::endl;
     }
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     word_count.insert(std::make_pair(("an"),2));
     //word_count.insert(std::map<std::string, size_t>(std::string("and"),3UL));
     word_count.insert(std::map<std::string, size_t>::value_type("And",4));
-    for(const auto map_ref:word_count)
+    for(const auto &map_ref:word_count)
     {
         std::cout << map_ref.first <<" : " << map_ref.second << std::endl;
     }
