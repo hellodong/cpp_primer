@@ -18,5 +18,13 @@ int main(int argc, char *argv[])
     blob.pop_back();
     std::cout << "back: " << blob.back() << std::endl;
 
+    std::cout << "pop all element" << std::endl;
+
+    while(blob.size())
+    {
+        blob.pop_back();
+    }
+    blob.pop_back();
+
     return 0;
 }
