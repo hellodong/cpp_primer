@@ -109,3 +109,53 @@ shared_ptr<int> p5 = make_shared<int> ();
 auto p6 = make_shared<vector<string>>();
 ```
 
+##### shared_ptr的拷贝和控制
+当进行拷贝或赋值操作时，每个shared_ptr都会记录多少个其他shared_ptr指向相同的对象:
+```C++
+    auto p = make_shared<int> (42); // p 指向的对象只有p一个引用者
+    auto q(p); //p和q指向相同对象，此对象有两个引用者
+```
+可以认为每个shared_ptr都有一个关联计数器，通常称**引用计数**。何时拷贝一个shared_ptr，计数器都会递增。当我们给shared_ptr赋予一个新值或是shared_ptr被销毁时，计数器就会递减。一旦一个shared_ptr的计数器为0，就会自动释放自己所管理对象:
+```C++
+    auto r = make_shared<int> (42); // r指向的int只有一个引用者
+    r=q; // 给r赋值，令它指向另一个地址
+         // 递增q指向对象的引用计数
+         // 递减r原来指向对象的引用计数
+         // r原来指向对象已没有引用者，会自动释放
+```
+当指向一个对象的最后一个shared_ptr被销毁时，shared_ptr类会自动销毁。通过另一个特殊成员函数-- **析构函数(destructor)** 完成销毁工作。shared_ptr的析构函数会递减它所指向的对象的引用计数。如果引用计数变为0，shared_ptr析构函数就会销毁对象，并释放它占用的内存。
+
+当动态对象不再被使用时，shared_ptr类会自动释放动态对象，这一特性使得动态内存的使用变得非常容易。我们可能返回一个函数，它返回一个shared_ptr，指向一个Foo类型的动态分配对象，对象是通过一个类型为T的参数进行初始化:
+```C++
+   // factory返回一个shared_ptr,指向一个动态分配的对象
+   shared_ptr<Foo> factory(T arg)
+   {
+        return make_shared<Foo> (arg);
+   }
+```
+可以确保它分配的对象会在恰当的时刻被释放。例如，下面的函数将factory返回的shared_ptr保存在局部变量中:
+```C++
+    void use_factory(T arg)
+    {
+        shared_ptr<Foo> p = facotry(arg);
+    } // p 离开了作用域，它指向的内存会被自动释放掉
+```
+当p被销毁时，将递减其引用计数并检查它是否为0。如果有其他shared_ptr也指向这块内存，就不会释放掉:
+```C++
+    shared_ptr<Foo> used_factory(T arg)
+    {
+        shared_ptr<Foo> p = facotry(arg);
+        return p; //当我们返回p时，引用计数进行了递增操作，p离开了作用域，但它指向的内存不会被释放掉
+    }
+```
+对于一块内存，shared_ptr类保证只要有任何shared_ptr对象引用它，它就不会被释放掉。如果忘记了销毁程序不再需要shared_ptr，程序仍会正确执行，但会浪费内存。shared_ptr在无用之后仍然保留的可能，将shared_ptr存放在一个容器中，随后重排了容器，从而不再需要某些元素。
+
+- 如果你将shared_ptr存放在一个容器中，不再需要全部元素，而只使用其中一部分，记得用erase删除不再需要的那些元素
+
+##### 定义StrBlob类
+
+[代码实现](./shared_ptr/src/strblob_impl.cpp)
+
+#### 直接管理内存
+**new** 分配内存,**delete** 释放new分配的内存。相对于智能指针,这两个运算符管理内存非常容易出错，而且它们不能依赖类对象拷贝，赋值和销毁操作的任何默认定义
+
