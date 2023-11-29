@@ -21,12 +21,14 @@ endif()
 
 add_executable(shared_ptr 	src/shared_ptr.cpp)
 add_executable(str_blob 	src/strblob.cpp src/strblob_impl.cpp)
+add_executable(new          src/new_delete.cpp)
 
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_auto_type)
+target_compile_features(shared_ptr PUBLIC cxx_auto_type)
 target_compile_features(str_blob PUBLIC cxx_auto_type)
+target_compile_features(new PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS shared_ptr str_blob
+install(TARGETS shared_ptr str_blob new
 	RUNTIME DESTINATION usr/bin)
 
