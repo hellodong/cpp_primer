@@ -199,3 +199,63 @@ const string *ps = new const string;
 ```
 [代码实现](./shared_ptr/src/new_delete.cpp)<br>
 类似其他const对象，动态分配的const对象必须进行初始化。对于一个定义了默认构造函数类类型，其const动态对象可以隐式初始化，其他类型必须就必须显式初始化。
+
+##### 内存耗尽
+默认情况下，如果new不能分配所要求的内存空间，它会抛出一个类型为bad_alloc的异常。我们也可以使用new的方式来阻止它抛出异常:
+```C++
+int *p1 = new int;              //如果分配失败，new抛出std::bad_alloc
+int *p2 = new (nothrow) int;    //如果分配失败，返回一个空指针
+```
+这种形式的new称为定位new,定位new允许我们向new传递额外的参数。此例中，我们传递给它一个由标准库定义的名为nothrow的对象，意图是告诉它不能抛出异常。这种形式的new不能分配所需内存时，会返回一个空指针。**bad_alloc** 和**nothrow** 都定义在new头文件中。
+
+##### 释放动态内存
+我们通过**delete**将动态内存归回给系统。delete表达式接受一个指针，指向我们想要释放的对象:
+```C++
+delete p; // p 必须指向一个动态分配对象或是一个空指针
+```
+我们传递给delete的指针必须指向动态分配的内存，或者一个空指针。释放一块并非new分配的内存，或者将相同的指针释放多次，行为是未定义的:
+```C++
+int i, *pi1 = &i, *pi2 = nullptr;
+double *pd = new double(3.01), *pd2 = pd;
+delete i;       // 错误，i不是一个指针
+delete pi1;     // 未定义：pi1指向一个局部变量 
+delete pi2;     // 正确，释放一个空指针总是没错的
+delete pd;      // 正确
+delete pd2;     // 未定义: pd2指向的内存已经被释放了
+```
+虽然一个const对象的值不能被改变，但它本身是可以被销毁的:
+```C++
+const int *pci = new const int();
+delete pci; // 正确：释放一个const对象
+```
+##### 动态对象的生命周期
+对于一个内置指针管理的动态对象，直到被显式释放之前它都是存在的。
+```C++
+// factory返回一个指针，指向一个动态分配的对象
+Foo *factory(T arg)
+{
+    return new Foo(arg);   // 调用者释放此内存
+}
+```
+记得在use_factory中释放内存:
+```C++
+void use_factory(T arg)
+{
+    Foo *p = factory(arg);
+    /*
+        使用p
+    */
+    delete p;   //记得释放内存，我们已经不需要它了
+}
+```
+当我们delete一个指针后，指针值就变为无效了 --- **空悬指针**,指向一块曾经保存数据对象但现在已经失效的内存的指针。有一种方法可以避免空悬指针问题：在指针即将离开其作用域之前释放掉所关联内存， 在delete之后将nullptr赋予指针。<br>
+动态内存的基本问题可能是多个指针指向相同的内存。在delete内存之后重置指针的方法只对这个指针有效，对其他任何仍指向(已释放的)内存的指针是没有作用的。
+```C++
+int *p = new int(42);
+auto p = q;         // p 和 q指向相同的内存
+delete p            // p 和 q均变为无效
+p = nullptr;        // 指出p不再绑定到任何对象
+```
+本例中p和q指向相同的动态分配对象。我们delete此内存，p置为nullpt。但是重置p对q没有任何作用，释放p所指向的内存时，q也变为无效了。实际系统中查找指向相同内存的所有指针是异常困难的。<br>
+练习12.6， 12.7 [代码实现](./shared_ptr/src/new_shared_ptr_vector.cpp)
+
