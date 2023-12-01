@@ -5,12 +5,12 @@ CXX_LDFLAGS=
 BIN=multiset_cmp
 output_dir=output
 
-all:${output_dir} $(BIN) 
+all:${output_dir} ${output_dir}/$(BIN) 
 
 ${output_dir}:
 	@mkdir -p $@
 
-${BIN}:${output_dir}/main.o ${output_dir}/Sales_data.o
+${output_dir}/${BIN}:${output_dir}/main.o ${output_dir}/Sales_data.o
 	${CXX} $^ -o $@
 
 ${output_dir}/main.o:src/main.cpp src/Sales_data.h
@@ -22,4 +22,4 @@ ${output_dir}/Sales_data.o:src/Sales_data.cpp
 PHONY:clean
 
 clean:
-	rm ${output_dir} ${BIN} -rf
+	rm ${output_dir} -rf

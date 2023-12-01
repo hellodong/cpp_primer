@@ -7,5 +7,8 @@
 ## Chapter10 Generic Algrothm
 [Generic Algrothm](./chapter10/generic_algrothm.md)
 
-## Chaper11 Associative Container
+## Chapter11 Associative Container
 [Associative Container](./chapter11/Associative_Container.md)
+
+## Chapter12 Allocate Memory
+[Allocate Memory](./chapter12/Alloctor_memory.md)

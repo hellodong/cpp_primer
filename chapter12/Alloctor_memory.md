@@ -259,3 +259,28 @@ p = nullptr;        // 指出p不再绑定到任何对象
 本例中p和q指向相同的动态分配对象。我们delete此内存，p置为nullpt。但是重置p对q没有任何作用，释放p所指向的内存时，q也变为无效了。实际系统中查找指向相同内存的所有指针是异常困难的。<br>
 练习12.6， 12.7 [代码实现](./shared_ptr/src/new_shared_ptr_vector.cpp)
 
+##### shared_ptr和new结合使用
+我们可以用new返回的指针来初始化智能指针：
+```C++
+shared_ptr<double> p1;                  
+shared_ptr<double> p2(new double(1.01));    // p2 指向一个值为42的int
+```
+接受指针参数的智能指针构造函数是explicit的。因此我们不能将一个内置指针隐式转换为一个智能指针，必须使用直接初始化形式来初始化一个智能指针:
+```C++
+shared_ptr<int> p1= new int ();     // 错误：必须使用直接初始化
+shared_ptr<int> p2(new int(1024));  // 正确：使用了直接初始化形式
+```
+一个返回shared_ptr的函数不能在其返回语句中隐式转换一个普通指针：
+```C++
+shared_ptr<int> clone(int p)
+{
+    return new int (p);     //错误：隐式转换为shared_ptr<int>
+}
+```
+我们必须将shared_ptr显式绑定到一个想要返回的指针上:
+```C++
+shared_ptr<int> clone (int p)
+{
+    return shared_ptr<int> (new int (p)); // 正确：显式地用int*创建shared_ptr<int>
+}
+```
