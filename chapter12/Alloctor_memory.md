@@ -1,5 +1,7 @@
 ## Allocator memory
 
+[TOC]
+
 我们编写的程序所使用的对象都有着严格定义的生存期。全局对象在启动时分配，程序结束时销毁。局部对象，我们进入定义所在程序块时被创建，离开快时销毁。局部static对象在第一次使用前分配，程序结束时销毁。
 
 动态分配的对象在生存期与它们在哪里创建是无关的，只有显示释放时，这些对象才会销毁。为了更安全地使用动态对象，标准库定义了两个智能指针。当一个对象应该被释放时，指向它的智能指针可以确保自动释放它。
@@ -284,3 +286,35 @@ shared_ptr<int> clone (int p)
     return shared_ptr<int> (new int (p)); // 正确：显式地用int*创建shared_ptr<int>
 }
 ```
+一个用来初始化智能指针的普通指针必须指向动态内存，因为智能指针默认使用delete释放它所关联的对象。
+<table>
+    <tr>
+        <th rospan="2">定义和改变shared_ptr的其他方法</th>
+    </tr>
+    <tr>
+        <td>shared_ptr<T> p(q)</td>
+        <td>p管理内存指针q所指向的对象;q必须向new分配的内存，且能转化为T*类型</td>
+    </tr>
+    <tr>
+        <td>shared_ptr<T> p(u)</td>
+        <td>p从unique_ptr u那里接管了对象的所有权；将u置为空</td>
+    </tr>
+    <tr>
+        <td>shared_ptr<T> p(q, d)</td>
+        <td>p接管了内置指针q所指向的对象所有权。q必须能转换为T*类型。<br>p将使用可调用对象d来替代delete</td>
+    </tr>
+    <tr>
+        <td>shared_ptr<T> p(p2,d)</td>
+        <td>p是shared_ptr p2的拷贝，唯一的区别是p将用可调用对象d来替代delete</td>
+    </tr>
+    <tr>
+        <td>p.reset()</td>
+        <td rowspan="3">若p是唯一指向其对象的shared_ptr,reset会释放此对象。<br>若传递了可选的参数内置指针q,会令p指向q,否则会将p置为空。<br>若还传递了参数d,将会调用d而不是delete来释放q</td>
+    </tr>
+    <tr>
+        <td>p.reset(q)</td>
+    </tr>
+    <tr>
+        <td>p.reset(q, d)</td>
+    </tr>
+</table>
