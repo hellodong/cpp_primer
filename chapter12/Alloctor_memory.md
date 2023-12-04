@@ -261,7 +261,7 @@ p = nullptr;        // 指出p不再绑定到任何对象
 本例中p和q指向相同的动态分配对象。我们delete此内存，p置为nullpt。但是重置p对q没有任何作用，释放p所指向的内存时，q也变为无效了。实际系统中查找指向相同内存的所有指针是异常困难的。<br>
 练习12.6， 12.7 [代码实现](./shared_ptr/src/new_shared_ptr_vector.cpp)
 
-##### shared_ptr和new结合使用
+#### shared_ptr和new结合使用
 我们可以用new返回的指针来初始化智能指针：
 ```C++
 shared_ptr<double> p1;                  
@@ -318,3 +318,28 @@ shared_ptr<int> clone (int p)
         <td>p.reset(q, d)</td>
     </tr>
 </table>
+
+##### 不要使用普通指针和混合指针
+考虑下面shared_ptr进行操作的函数:
+```C++
+// 在函数被调用时ptr被创建并初始化
+void process(shared_ptr<int> ptr)
+{
+    //使用ptr
+}  //ptr离开作用域，被销毁
+```
+process的参数是传值方式的，因此实参会被拷贝到ptr中。拷贝一个shared_ptr会递增引用计数，因此，在process运行过程中，引用计数至少为2。当process结束时，ptr的引用计数会递减，但不会变0。<br>
+传递一个shared_ptr：
+```C++
+shared_ptr<int> p(new int(42)); // 引用计数为1
+process(p);     // 拷贝p会递增它的引用计数；在process中引用计数值为2
+int i = *p;     // 正确，引用计数为1
+```
+传递一个临时的shared_ptr,这个shared_ptr是用一个内置指针显式构造。但是，这样做很可能导致错误:
+```C++
+int *x(new int(1024)); //x是一个内置指针,不是智能指针
+process(x);             // 错误，不能将int*转换为shared_ptr<int>
+process(shared_ptr<int> (x));  // 合法，但执行完process 内存会被释放
+int j = *x;             // 未定义行为, x是一个空悬指针
+```
+将一个shared_ptr绑定到一个普通指针时，我们就将内存管理交给了这个shared_ptr。一旦这样做了，我们就不能用内置指针访问shared_ptr所指向的内存了。
