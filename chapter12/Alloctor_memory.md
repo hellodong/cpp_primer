@@ -289,7 +289,7 @@ shared_ptr<int> clone (int p)
 一个用来初始化智能指针的普通指针必须指向动态内存，因为智能指针默认使用delete释放它所关联的对象。
 <table>
     <tr>
-        <th rospan="2">定义和改变shared_ptr的其他方法</th>
+        <th colspan="2">定义和改变shared_ptr的其他方法</th>
     </tr>
     <tr>
         <td>shared_ptr<T> p(q)</td>
@@ -319,7 +319,7 @@ shared_ptr<int> clone (int p)
     </tr>
 </table>
 
-##### 不要使用普通指针和混合指针
+##### 不要混合使用普通指针和智能指针
 考虑下面shared_ptr进行操作的函数:
 ```C++
 // 在函数被调用时ptr被创建并初始化
@@ -343,3 +343,33 @@ process(shared_ptr<int> (x));  // 合法，但执行完process 内存会被释�
 int j = *x;             // 未定义行为, x是一个空悬指针
 ```
 将一个shared_ptr绑定到一个普通指针时，我们就将内存管理交给了这个shared_ptr。一旦这样做了，我们就不能用内置指针访问shared_ptr所指向的内存了。
+
+##### 不要使用get初始化另一个智能指针
+智能指针定义名为get的函数，返回一个内置指针。将另一个智能指针绑定到get返回的指针是错误的：
+```C++
+shared_ptr<int> p(new int (42)); //智能指针引用计数为1
+int *q = p.get();   
+{
+    shared_ptr <int> (q); //两个独立的shared_ptr指向相同的内存
+}// 程序块结束，q被销毁，它指向的内存被释放
+int foo = *p; //未定义：p指向的内存已经被释放了
+```
+本例中，p和q指向相同的内存。两个智能指针相互独立创建，因此各自引用计数都是1。当一个程序块中的智能指针销毁时，导致指向的内存被释放。从而p变成一个空悬指针，试图使用p时，行为未定义。当p被销毁时，这块内存会被第二次释放。
+
+- 永远不要用get初始化另一个智能指针或者为另一个智能指针赋值
+
+###### 其他shared_ptr操作
+我们可以用reset将一个新的指针赋予一个shared_ptr:
+```C++
+p.reset(new int (1024));  //p 指向一个新对象
+```
+与赋值类似,reset会更新引用计数，可能会释放p指向的对象；reset与unique经常一起使用，控制多个shared_ptr共享对象:
+```C++
+if (!p.unique())
+{
+    p.reset(new string (*p)); //我们不是唯一用户；分配新的拷贝
+}
+
+*p += newVal;   //现在我们是唯一用户，可以改变对象的值。
+```
+
