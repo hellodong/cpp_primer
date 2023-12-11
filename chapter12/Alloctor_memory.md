@@ -373,3 +373,52 @@ if (!p.unique())
 *p += newVal;   //现在我们是唯一用户，可以改变对象的值。
 ```
 
+#### 智能指针与异常
+
+使用智能指针，程序块过早结束，智能指针类也能确保在内存不需时将其释放:
+```C++
+void f()
+{
+    shared_ptr<int> sp(new int (1024));  // 分配一个对象
+    // 过程中执行抛出异常，且在f中未捕获
+}// 函数结束时shared_ptr自动释放内存
+```
+函数退出有两种可能，正常处理结束或者发生了异常，无论哪种情况，局部对象都会被销毁。<br>
+与之相对，直接管理的内存发生异常时是不会释放的。使用内置指针管理内存，在new之后的对应的delete之前发生了异常，内存不会被释放:
+```C++
+void f()
+{
+    int *ip = new int(42);   //动态分配一个对象
+    //这段代码throw exception,未在f中捕获
+    delete ip;
+}
+```
+在new和delete之间发生异常，且异常未在f中捕获，则内存永远无法释放。
+
+##### 使用我们自己的释放操作
+默认情况下，shared_ptr假定指向的是他们的动态内存。因此，当一个shared_ptr被销毁时，默认对它管理的指针进行delete操作。用shared_ptr来管理一个connection,我们必须首先定义一个函数来替代delete。这个删除器(deleter)函数必须能够对shared_ptr中保存的指针进行释放的操作：
+```C++
+void end_connection(connection *p)
+{
+    disconnect(p);
+}
+
+void f(detination &d)
+{
+    connection c= connect(&d);
+    shared_ptr<connection> p (&c, end_connection);
+    // 使用连接
+    // 当f退出时，connection会被正确关闭，即使是异常退出
+}
+```
+创建shared_ptr时，可以传递一个指向删除器函数的参数。当p被销毁时，它不会对保存的指针执行delete，而是调用end_connection。
+
+**智能指针陷阱**
+
+- 不适用相同内置指针初始化多个智能指针
+- 不delete get()返回的指针
+- 不使用get()初始化或reset另一个智能指针
+- 如果使用get()返回的指针，记住当最后一个对应的智能指针销毁后，之前get()返回的指针就失效了
+- 如果使用智能指针管理的资源不是new分配的内存，记住传递给它一个删除器
+
+
