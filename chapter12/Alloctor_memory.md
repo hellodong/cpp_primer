@@ -292,19 +292,19 @@ shared_ptr<int> clone (int p)
         <th colspan="2">定义和改变shared_ptr的其他方法</th>
     </tr>
     <tr>
-        <td>shared_ptr<T> p(q)</td>
+        <td>shared_ptr < T> p(q)</td>
         <td>p管理内存指针q所指向的对象;q必须向new分配的内存，且能转化为T*类型</td>
     </tr>
     <tr>
-        <td>shared_ptr<T> p(u)</td>
+        <td>shared_ptr< T> p(u)</td>
         <td>p从unique_ptr u那里接管了对象的所有权；将u置为空</td>
     </tr>
     <tr>
-        <td>shared_ptr<T> p(q, d)</td>
+        <td>shared_ptr < T> p(q, d)</td>
         <td>p接管了内置指针q所指向的对象所有权。q必须能转换为T*类型。<br>p将使用可调用对象d来替代delete</td>
     </tr>
     <tr>
-        <td>shared_ptr<T> p(p2,d)</td>
+        <td>shared_ptr< T> p(p2,d)</td>
         <td>p是shared_ptr p2的拷贝，唯一的区别是p将用可调用对象d来替代delete</td>
     </tr>
     <tr>
@@ -421,4 +421,65 @@ void f(detination &d)
 - 如果使用get()返回的指针，记住当最后一个对应的智能指针销毁后，之前get()返回的指针就失效了
 - 如果使用智能指针管理的资源不是new分配的内存，记住传递给它一个删除器
 
+#### unique_ptr
+**unique_ptr**与shared_ptr不同，某个时刻只能有一个unique_ptr指向一个给定对象。当unique_ptr对象销毁时，它所指向的对象也被销毁。当我们定义一个unique_ptr时，需要将其绑定到一个new返回的指针上,直接初始化:
+```C++
+    unique_ptr<int> p(new int(42));  // p指向一个值为42的int
+```
+unique_ptr不支持普通的拷贝和赋值操作：
+```C++
+unique_ptr<string> p1(new string("cpp primer"));
+unique_ptr<string> p2(p1);  //错误，unique_ptr不支持拷贝
+unique_ptr<string> p3;
+p3 = p1;   //错误，unique_ptr不支持赋值
+```
+<table>
+    <tr>
+        <th colspan="2">unique_ptr操作</th>
+    </tr>
+    <tr>
+        <td>unique_ptr< T> u1</td>
+        <td>空unique_ptr 可以指向数据类型为T的对象；u1会使用delete来释放它的操作</td>
+    </tr>
+    <tr>
+        <td>unique_ptr< T,D> u2</td>
+        <td>u2会使用一个类型为D的可调用对象来释放它的指针</td>
+    </tr>
+    <tr>
+        <td>unique_ptr< T,D> u(d)</td>
+        <td>空unique_ptr,指向类型为T的对象，用类型为D的对象d替代delete</td>
+    </tr>
+    <tr>
+        <td>u = nullptr</td>
+        <td>释放u指向的对象，将u置为空</td>
+    </tr>
+    <tr>
+        <td>u.release()</td>
+        <td>释放u指向的对象，将u置为空</td>
+    </tr>
+    <tr>
+        <td>u.reset()</td>
+        <td>释放u指向的对象</td>
+    </tr>
+    <tr>
+        <td>u.reset(p)</td>
+        <td rowspan="2">如果提供了内置指针p,令u指向这个对象；否则将u置为空</td>
+    </tr>
+    <tr>
+        <td>u.reset<nullptr></td>
+    </tr>
+</table>
+
+通过调用release或reset将指针所有权从一个(非const)unique_ptr转移给另一个unique_ptr:
+```C++
+unique_ptr<string> p2(p1.release()) ;// release将p1置空，同时给p2直接用p1返回的内置指针直接初始化
+unique_ptr<string> p3(new string("TEXT"));
+p2.reset(p3.release()); // reset释放了p2原来指向的内存,p3将所有权转交给了P2
+```
+调用release会切断unique_ptr和它原来管理的对象间的联系。release返回的指针通常被用来初始化智能指针。如果我们不用另一个智能指针管理release返回的指针，我们就要负责资源的释放：
+```C++
+p2.release();           //错误：p2不会释放内存，而且我们丢失了指针
+auto p = p2.release();  //正确，但我们必须delete p;
+```
+##### 传递unique_ptr参数和返回unique_ptr
 
