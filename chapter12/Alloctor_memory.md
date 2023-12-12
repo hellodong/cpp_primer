@@ -358,7 +358,7 @@ int foo = *p; //未定义：p指向的内存已经被释放了
 
 - 永远不要用get初始化另一个智能指针或者为另一个智能指针赋值
 
-###### 其他shared_ptr操作
+##### 其他shared_ptr操作
 我们可以用reset将一个新的指针赋予一个shared_ptr:
 ```C++
 p.reset(new int (1024));  //p 指向一个新对象
@@ -483,3 +483,38 @@ auto p = p2.release();  //正确，但我们必须delete p;
 ```
 ##### 传递unique_ptr参数和返回unique_ptr
 
+我们可以拷贝或赋值一个将要被销毁的unique_ptr。最常见的例子就是函数返回一个unique_ptr:
+```C++
+unique_ptr<int> clone (int p)
+{
+    return unique_ptr<int> (new int(p)); // 正确: 从int *创建一个unique_ptr<int>
+}
+
+unique_ptr<int> clone(int p)
+{
+    unique_ptr<int> ret(new int(p));
+
+    return ret;     //正确: 返回一个局部对象的拷贝
+}
+
+```
+编译器直到要返回的对象将要被销毁。在此情况下，编译器执行一种特殊的“拷贝”。
+
+##### 向unique_ptr传递删除器
+unique_ptr默认情况下用delete释放它指向的对象。unique_ptr管理删除器方式与shared_ptr不同。重载一个unique_ptr中的删除器会影响到unique_ptr类型以及如何构造该类型对象。在创建或reset一个unique_ptr类型对象时，必须提供一个指定类型的可调用对象（删除器）:
+```C++
+// p指向一个类型为objT的对象，并使用一个类型为delT对象释放objT对象，调用一个名为fcn的delT类型对象
+unique_ptr< objT, delT> p (new objT, fcn);
+```
+一个更具体的例子，重写连接函数，用unique_ptr替代shared_ptr:
+```C++
+void f(destination &d)
+{
+    connection c=connect(&d);
+    unique_ptr<connection, decltype(end_connection) *> p(&c, end_connection);
+    /*
+        使用连接
+    */
+    当f退出时(及时异常退出)connection会被正确关闭
+}
+```
