@@ -518,3 +518,52 @@ void f(destination &d)
     当f退出时(及时异常退出)connection会被正确关闭
 }
 ```
+
+#### weak_ptr
+*weak_ptr*是一种不控制所指向对象生命周期的智能指针，它指向shared_ptr管理的对象。weak_ptr绑定到shared_ptr不会改变该shared_ptr的引用计数，shared_ptr被销毁，对象也还会被销毁。
+<table>
+<tr>
+    <th rowspin="2">weak_ptr</th>
+<tr>
+<tr>
+    <td>weak_ptr< T> w</td>
+    <td>空weak_ptr可以指向类型为T的对象</td>
+</tr>
+<tr>
+    <td>weak_ptr<T> wp(sp)</td>
+    <td>与shared_ptr sp指向相同对象的weak_ptr。T必须能转换为sp指向的类型</td>
+</tr>
+<tr>
+    <td>w = p</td>
+    <td>p可以是一个shared_ptr也可以是weak_ptr。赋值后w与p共享对象</td>
+</tr>
+<tr>
+    <td>w.reset()</td>
+    <td>将w置为空</td>
+</tr>
+<tr>
+    <td>w.use_count()</td>
+    <td>与w共享对象的shared_ptr数量</td>
+</tr>
+<tr>
+    <td>w.expired()</td>
+    <td>若use_count为0则返回true,否则返回false</td>
+</tr>
+<tr>
+    <td>w.lock()</td>
+    <td>如果expired返回true，返回一个空shared_ptr;否则返回一个指向w的对象shared_ptr</td>
+</tr>
+</table>
+
+当我们创建一个weak_ptr时，要用一个shared_ptr来初始化它：
+```C++
+auto sp = make_shared<int> (42);
+weak_ptr<int> wp(sp);       // wp弱共享p;p的引用计数未改变
+```
+创建wp不会改变p的引用计数；wp指向的对象可能被释放掉。由于对象可能不存在，我们不能使用weak_ptr直接访问对象，必须调用lock，此函数检查weak_ptr指向的对象是否仍存在。如果存在，lock返回一个指向共享对象的shared_ptr：
+```C++
+if(shared_ptr<int> sp = wp.lock())  //如果sp不为空则条件成立
+{
+    // 在if中，sp与wp共享对象
+}
+```
