@@ -7,9 +7,8 @@
 #include <vector>
 #include <memory>
 
-#include "strblobptr.h"
 
-//class StrBlobPtr;
+class StrBlobPtr;
 
 class StrBlob
 {

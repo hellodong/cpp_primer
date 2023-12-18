@@ -3,7 +3,7 @@
 #include <iostream>
 
 #include "strblob.h"
-//#include "strblobptr.h"
+#include "strblobptr.h"
 
 
 int main(int argc,char *argv[])

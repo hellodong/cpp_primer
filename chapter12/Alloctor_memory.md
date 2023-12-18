@@ -38,11 +38,11 @@ shared_ptr和unique_ptr都支持的操作列表:
         <th colspan="2">shared_ptr和unique_ptr都支持的操作</th>
     </tr>
     <tr>
-        <td>shared_ptr<T> sp</td>
+        <td>shared_ptr< T> sp</td>
         <td rowspan="2">空智能指针，指向类型为T的对象</td>
     </tr>
     <tr>
-        <td>unique_ptr<T> up<td>
+        <td>unique_ptr< T> up<td>
     </tr>
     <tr>
         <td>p</td>
@@ -75,11 +75,11 @@ shared_ptr独有操作列表:
         <th colspan="2">shared_ptr独有操作<th>
     </tr>
     <tr>
-        <td>make_shared<T> (args)</td>
+        <td>make_shared< T> (args)</td>
         <td rowspan="2">返回一个shared_ptr,指向一个动态分配类型为T的对象, <br>使用args初始化对象</td>
     </tr>
     <tr>
-        <td>shared_ptr<T> p(q)</td>
+        <td>shared_ptr< T> p(q)</td>
     </tr>
     <tr>
         <td>p = q</td>
@@ -523,7 +523,7 @@ void f(destination &d)
 *weak_ptr*是一种不控制所指向对象生命周期的智能指针，它指向shared_ptr管理的对象。weak_ptr绑定到shared_ptr不会改变该shared_ptr的引用计数，shared_ptr被销毁，对象也还会被销毁。
 <table>
 <tr>
-    <th colspin="2">weak_ptr</th>
+    <th colspan="2">weak_ptr</th>
 <tr>
 <tr>
     <td>weak_ptr< T> w</td>
@@ -596,7 +596,7 @@ string *psa2 = new string[10]();  // 10个空string
 ```C++
 // 10个int分别用列表中对应的初始化器初始化
 int *pia3 = new int[10] {0,1,2,3,4,5,6,7,8,9};
-string *psa3 = new string[10]("an", "primer", string(3,'+'));
+string *psa3 = new string[10]{"an", "primer", string(3,'+')};
 ```
 
 初始化器会用来初始化动态数组中开始部分的元素。如果初始化器小于元素数目，剩余进行值初始化。如果初始化器大于元素数目，new表达式失败，不会分配任何内存。在本例中，new会抛出一个类型为bad_array_new_length的异常。类似bad_alloc,此类型定义在头文件new中。
@@ -656,3 +656,33 @@ up.release();   //自动用delete[]销毁其指针
 </table>
 
 C++11中,shared_ptr不直接支持管理动态数组
+
+#### allocate 类
+new和delete有一些灵活性上的局限性，new将内存分配和对象的构造组合在了一起，delete将对象析构和内存释放组合在一起。当分配一大块内存时，我们通常计划在这块内存上按需构造对象，我们希望将内存分配和对象构造分离。<br>
+标准库**allocator**类定义在头文件memory中，帮助我们将内存分配和对象构造分离开。allocator是一个模板,我们必须指明这个allocator可以分配的对象类型:
+```C++
+allocator<string> alloc;            // 可以分配string的allocator对象
+auto const p = alloc.allocate(n);   // 分配n个未初始化的string
+```
+
+<table>
+<tr>
+    <th colspan="2">allocator类及其算法</th>
+</tr>
+<tr>
+    <td>allocator< T> a</td>
+    <td>定义一个名为a的allocator对象，它可以为类型为T的对象分配内存</td>
+</tr>
+<tr>
+    <td>a.allocator(n)</td>
+</tr>
+<tr>
+    <td>a.deallocate(p,n)</td>
+</tr>
+<tr>
+    <td>a.construct(p,args)</td>
+</tr>
+<tr>
+    <td>a.destroy(p)</td>
+</tr>
+</table>

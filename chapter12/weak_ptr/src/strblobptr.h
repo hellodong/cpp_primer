@@ -1,6 +1,5 @@
 
 
-
 #ifndef _STRBLOBPTR_H_
 #define _STRBLOBPTR_H_
 
@@ -8,9 +7,7 @@
 #include <string>
 #include <memory>
 
-#include "strblob.h"
-
-//class StrBlob;
+class StrBlob;
 
 class StrBlobPtr{
     public:
