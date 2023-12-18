@@ -523,7 +523,7 @@ void f(destination &d)
 *weak_ptr*是一种不控制所指向对象生命周期的智能指针，它指向shared_ptr管理的对象。weak_ptr绑定到shared_ptr不会改变该shared_ptr的引用计数，shared_ptr被销毁，对象也还会被销毁。
 <table>
 <tr>
-    <th rowspin="2">weak_ptr</th>
+    <th colspin="2">weak_ptr</th>
 <tr>
 <tr>
     <td>weak_ptr< T> w</td>
@@ -598,6 +598,7 @@ string *psa2 = new string[10]();  // 10个空string
 int *pia3 = new int[10] {0,1,2,3,4,5,6,7,8,9};
 string *psa3 = new string[10]("an", "primer", string(3,'+'));
 ```
+
 初始化器会用来初始化动态数组中开始部分的元素。如果初始化器小于元素数目，剩余进行值初始化。如果初始化器大于元素数目，new表达式失败，不会分配任何内存。在本例中，new会抛出一个类型为bad_array_new_length的异常。类似bad_alloc,此类型定义在头文件new中。
 
 ##### 动态分配一个空数组是合法的
@@ -607,3 +608,51 @@ char arr[0];    //错误：不能定义长度为0的数组
 char *cp = new cahr[0]; //正确，但是cp不能解引用
 ```
 对于零长度的指针来说，此指针就像尾后指针一样，我们可以像用尾后迭代器一样使用这个指针。
+
+##### 释放动态数组
+释放动态数组，我们使用一种特殊形式的delete ---- 在指针前加上一个空括号对:
+```C++
+delete p;       // p 必须指向一个动态分配的对象或为空
+delete [] pa;   // pa必须指向一个动态分配的数组或为空
+```
+销毁pa指向的数组中的元素，并释放对应内存。数组中元素按逆序销毁，最后一个元素首先被销毁，然后倒数第二个，以此类推。当我们释放一个指向数组的指针时，空括号是必须的：它指示编译器此指针指向一个对象数组的第一个元素。如果我们delete一个指向数组的指针时忽略了方括号，其行为是未定义的。<br>
+当我们使用类型别名定义一个数组类型时，在new表达式中不适用[],即使这样，在释放一个数组指针式也必须使用方括号:
+```C++
+typedef int attrT[42];  // attrT是42个int的数组类型的别名
+int *p = new attrT;     // 分配一个42个int的数组；p 指向第一个元素
+delete [] p;            // 方括号是必须的，因为我们当初分配的是一个数组
+```
+
+##### 智能指针和动态数组
+标准库提供了一个可以管理new分配的数组的unique_ptr版本。用一个unique_ptr管理动态数组，我们必须在对象类型后跟一对空方括号:
+```C++
+// up指向一个包含10个未初始化int的数组
+unique_ptr<int[]> up(new int[10]);
+up.release();   //自动用delete[]销毁其指针
+```
+由于up指向一个数组，当up销毁它管理的指针时，会自动使用delete[]。<br>
+当一个unique_ptr指向一个数组时，我们不能使用点和箭头成员运算符。unique_ptr指向的时一个数组而不是单对象，因此点和箭头运算符是无意义的。当unique_ptr指向一个数组时，我们可以使用下标运算符来访问数组中的元素。<br>
+[代码实现](./alloc_array/src/new_array.cpp)
+
+<table>
+    <tr>
+        <th colspan="2"> 指向数组的unique_ptr</th>
+    </tr>
+    <tr>
+        <td colspan="2">指向数组的unique_ptr不支持成员访问运算符。其他unique_ptr操作运算不变</td>
+    </tr>
+    <tr>
+        <td>unique_ptr< T[]>u</td>
+        <td>u可以指向一个动态分配的数组，元素类型为T</td>
+    </tr>
+    <tr>
+        <td>unique_ptr< T[]>u(p)</td>
+        <td>u指向内置指针p所指向的动态分配的数组。p必须能转换为类型T*</td>
+    </tr>
+    <tr>
+        <td>u[i]</td>
+        <td>返回u拥有的数组中位置i处对象</td>
+    </tr>
+</table>
+
+C++11中,shared_ptr不直接支持管理动态数组
