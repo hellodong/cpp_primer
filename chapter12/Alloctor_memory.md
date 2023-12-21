@@ -692,3 +692,21 @@ auto const p = alloc.allocate(n);   // 分配n个未初始化的string
 </table>
 
 ##### allocator分配未构造的内存
+allocator分配的内存是未构造的(unconstructed)。在C++11标准中，construct成员函数接受一个指针和零个或多个额外参数，在给定位置构造一个元素，额外参数用来初始化对象。这些额外参数必须是构造的对象类型相匹配的初始化器:
+```C++
+auto q = p;      
+alloc.construct(q++);       // *q为空字符串
+alloc.construct(q++,3,'c'); // *q为ccc
+alloc.construct(q++,"c++ primer");  // *q为 c++ primer
+```
+当我们用完对象后，必须对每个构造元素调用destroy来销毁他们：
+```C++
+while (q != p)
+    alloc.destroy(--q);
+```
+一旦元素被销毁后，就可以重新使用这部分内存保存其他string,也可以将其归还给系统。释放内存通过调用deallocate完成:
+```C++
+alloc.deallocate(p,n);
+```
+我们传递给deallocate的指针不能为空，必须指向由allocate分配的内存。传递给deallocate的大小参数必须调用allocated分配内存时提供的大小参数具有一样的值。<br>
+[代码实现](./alloc_array/src/allocator.cpp)
