@@ -710,3 +710,6 @@ alloc.deallocate(p,n);
 ```
 我们传递给deallocate的指针不能为空，必须指向由allocate分配的内存。传递给deallocate的大小参数必须调用allocated分配内存时提供的大小参数具有一样的值。<br>
 [代码实现](./alloc_array/src/allocator.cpp)
+
+### 使用标注库:文本查询程序
+ [代码实现](./text_query/CMakeLists.txt)
