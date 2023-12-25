@@ -13,3 +13,6 @@
 ## Chapter12 Allocate Memory
 [Allocate Memory](./chapter12/Alloctor_memory.md)
 
+## Chapter13 Control Copy
+[Control Copy](./chapter13/Control_Copy.md)
+
