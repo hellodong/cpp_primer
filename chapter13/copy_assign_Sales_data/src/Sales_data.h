@@ -17,6 +17,12 @@ public:
 		std::cout << "cin input three parameters" << std::endl;
 		read(is);
 	}
+    Sales_data(const Sales_data &rhs)
+    {
+        bookNo = rhs.bookNo;
+        units_sold = rhs.units_sold;
+        revenue = rhs.revenue;
+    }
 	std::istream &read(std::istream &is);
 private:
     std::string bookNo;

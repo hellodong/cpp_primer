@@ -22,6 +22,8 @@ int main(void)
     copy_assign = sale_data_all;
     print(std::cout, copy_assign);
 
+    std::cout <<"print private member revenue:" << copy_assign.revenue << std::endl;
+
     return 0;
 }
 
