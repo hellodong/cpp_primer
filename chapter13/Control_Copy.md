@@ -120,4 +120,22 @@ HasPtr f(HasPtr hp)     //传值参数，所以被拷贝
 ##### 需要拷贝操作的类也需要赋值操作，反之亦然
 某些类所要完成的工作，只需要拷贝或赋值操作，不需要析构函数。如果一个类需要拷贝构造函数，几乎可以肯定它也需要一个拷贝赋值运算符。反之亦然。然而，无论是否需要拷贝构造函数还是拷贝赋值运算符都不必然以为着也需要析构函数。
 
+#### 使用=default
+可以通过将拷贝控制成员函数定义为 **=default** 来显示要求编译器生成合成的版本：
+```C++
+class Sales_data{
+    public:
+        Sales_data() = default;
+        Sales_data(const Sales_data &) = default;
+        Sales_data &operator=(const Sales_data &);
+        ~Sales_data() = default;
+};
+
+Sales_data& Sales_data::operator=(const Sales_data &rhs) = default;
+```
+当我们在类内用=default修饰成员的申明时，合成的函数将隐式地声明为内联的。如果我们不希望合成的成员是内联函数，应该只对成员的类外定义使用=default,就像对拷贝赋值运算符所做的那样。
+
+- 我们只能对具有合成版本的成员函数使用=default
+
+#### 阻止拷贝
 
