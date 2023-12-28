@@ -22,11 +22,14 @@ endif()
 endif()
 
 add_executable(${PROJECT_NAME} src/main.cpp src/Sales_data.cpp)
+add_executable(NoCopy src/Nocopy.cpp )
+
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_auto_type)
+target_compile_features(NoCopy PUBLIC cxx_auto_type)
 
-#message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
+message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${PROJECT_NAME} NoCopy
 	RUNTIME DESTINATION usr/bin)
 
