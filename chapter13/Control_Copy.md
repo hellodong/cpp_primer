@@ -226,6 +226,7 @@ HasPtr &HasPtr::operator=(const HasPtr &rhs)
     return *this;
 }
 ```
+[代码实现](./HasPtr/src/hasPtr_val.cpp)
 
 **关键概念:赋值运算符**<br>
 编写赋值运算符时，有两点需要记住:
@@ -235,3 +236,59 @@ HasPtr &HasPtr::operator=(const HasPtr &rhs)
 编写一个赋值运算符时，一个好的模式时先将右侧运算对象拷贝到一个局部临时对象中。拷贝完成后，销毁左侧运算对象的先哟成员就是安全的了。一旦左侧运算对象资源被销毁，就只剩下将数据从临时对象拷贝到左侧运算对象的成员了。
 
 #### 定义行为像指针的类
+对于行为类似指针的类，我们需要为其定义拷贝构造函数和拷贝赋值运算符，来拷贝指针成员本身而不是它指向的string。我们的类任然需要自己的析构函数来释放接受string参数的构造函数分配的内存。但在，在本例中，析构函数不能单方面的释放关联的string。只有当最后一个指向string的HasPtr销毁时，它才可以释放string。<br>
+我们直接管理资源，使用引用计数就很有用了。为了说明引用计数如何工作，我们将重新定义HasPtr,令其行为像指针一样，但我们不使用shared_ptr，设计自己的引用计数
+
+##### 引用计数
+引用计数工作方式如下:
+- 除了初始化对象外，每个构造函数(拷贝构造函数除外)还要创建一个引用计数，用来记录有多少对象正在创建的对象共享状态。当我们创建一个对象时，只有一个对象共享状态
+- 拷贝构造函数不分配新的计数器，而是拷贝给定对象的数据成员，包括计数器。拷贝构造函数递增共享计数器，指出给定对象的状态又被一个新用户所共享
+- 析构函数递减计数器，指出共享状态的用户少了一个。如果计数器变为0，则析构函数释放状态
+- 拷贝赋值运算符递增右侧运算对象的计数器，递减左侧运算对象的计数器。如果左侧运算对象的计数器变为0，意味着它的共享状态没有用户了，拷贝赋值运算符就必须销毁状态。
+
+共享计数器的一种方法是将计数器保存在动态内存中。创建一个对象时，我们分配一个新的计数器。当拷贝或赋值对象时，我们拷贝指向计数器的指针。使用这种方法，副本和原对象都会指向相同的计数器。
+
+##### 定义一个使用引用计数的类
+编写类指针的HasPtr版本:
+```C++
+class HasPtr{
+    public:
+        HasPtr(const std::string &s=std::string()):ps(new std::string(s)),i(0),use_count(new std::size_t(1)) {}
+        HasPtr(const HasPtr &p):ps(p.ps),i(p.i), use_count(p.use_count) {++*use_count;}
+        HasPtr &operator=(const HasPtr &);
+        ~HasPtr();
+    private:
+    std::string *ps;
+    int i;
+    std::size_t *use_count;
+};
+```
+当拷贝或赋值一个HasPtr对象时，我们希望副本和原对象都指向相同的string。即，拷贝一个HasPtr时，我们将拷贝ps本身，而不是ps指向的string。当我们进行拷贝时，还会递增该string关联的计数器。<br>
+析构函数不能无条件地delete ps ----可能亥哟其他对象指向这块内存。析构函数应该递减引用计数，指出共享string地对象少了一个。如果计数为0，则析构函数释放ps和use_count指向地内存:
+```C++
+HasPtr::~HasPtr()
+{
+    if (--*use_count == 0)
+    {
+        delete ps;
+        delete use;
+    }
+}
+```
+拷贝赋值运算符与往常一样执行类似拷贝构造函数和析构函数的工作。即，它必须递增右侧运算符对象的引用计数，并递减左侧运算对象的引用计数，在必要时释放使用的内存。赋值运算符必须处理自赋值。
+```C++
+HasPtr &HasPtr::operator=(const HasPtr &rhs)
+{
+    ++*rhs.use;
+    if (--*use_count == 0)
+    {
+        delete ps;
+        delete use_count;
+    }
+    ps = rhs.ps;
+    i = rhs.i;
+    use_count = rhs.use_count;
+    return *this;
+}
+```
+[代码实现](./HasPtr/src/hasPtr_ptr.cpp)
