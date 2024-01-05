@@ -292,3 +292,47 @@ HasPtr &HasPtr::operator=(const HasPtr &rhs)
 }
 ```
 [代码实现](./HasPtr/src/hasPtr_ptr.cpp)
+
+#### 交换操作
+如果一个类定义了自己的swap，那么算法将使用类自定义版本。否则算法将使用标准库定义的swap。swap实现是为了交换两个对象，我们需要进行一次拷贝和两次赋值。交换两个类值HasPtr对象：
+```C++
+HasPtr temp = v1;
+v1 = v2;
+v2 = temp;
+```
+这段代码将V1的string拷贝了两次 ---- 第一次是HasPtr的拷贝构造函数将v1拷贝给temp,第二次是赋值运算符将temp赋予v2。将v2赋予v1的语句还拷贝了原来v2中的string。理论上，这些内存分配都不是必要的。我们更希望swap交换指针，而不是分配string的副本。即:
+```C++
+string *temp = v1.ps;
+v1.ps = v2.ps;
+v2.ps = temp;
+```
+
+##### 编写我们自己的swap函数
+可以在我们的类上定义一个自己版本的swap重载swap的默认行为。swap的典型实现如下:
+```C++
+class HasPtr{
+    friend void swap(HasPtr &, HasPtr &);
+
+};
+
+inline void swap(HasPtr &lhs, HasPtr &rhs)
+{
+    using std::swap;
+    swap(lhs.ps, rhs.ps);
+    swap(lhs.i, rhs.i);
+}
+```
+
+##### 在赋值运算符中使用swap
+定义swap的类通常用swap来定义它们的赋值运算符。这些运算符使用了一种名为拷贝并交换的技术。这种技术将左侧运算对象与右侧运算对象的一个副本交换：
+```C++
+HasPtr &HasPtr::operator=(HasPtr rhs)
+{
+    swap(*this, rhs);
+    return *this;
+}
+```
+我们将右侧运算对象以传值方式传递给了赋值运算符。因此，rhs是右侧运算对象的一个副本。参数传递时拷贝HasPtr操作会分配该对象的string的一个新副本。<br>
+在赋值运算符的函数体中，我们调用swap交换rhs和\*this中的数据成员。这个调用将左侧运算对象原来保存的指针存入this中，并将rhs中原来的指针存入\*this。因此，在swap调用之后， *this中的指针成员将指向新分配的string ---- 右侧运算对象中string的一个副本。<br>
+当赋值运算符结束时，rhs被销毁，HasPtr的析构函数将执行。此析构函数delete rhs现在指向的内存，即，释放掉左侧运算对象中原来的内存。<br>
+这个技术的有趣之处是它自动处理了自赋值情况是异常安全的。通过改变左侧运算对象之前拷贝右侧运算对象保证了自赋值的正确，这与我们在原来的赋值运算符中使用的方法是一致的。
