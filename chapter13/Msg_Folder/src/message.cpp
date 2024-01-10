@@ -3,6 +3,9 @@
 #include "message.h"
 #include "folder.h"
 
+#include <iostream>
+
+
 Message::Message(const Message &rhs):
     content(rhs.content), folders(rhs.folders)
 {
@@ -48,6 +51,15 @@ void Message::remove_from_folders()
     for(auto f:folders)
     {
         f->rmMsg(this);
+    }
+}
+
+void Message::print_folders()
+{
+    std::cout <<"Messages: " << content << ", used by following folders:\n" ;
+    for (auto f:folders)
+    {
+        std::cout <<std::hex <<f<<std::endl;
     }
 }
 

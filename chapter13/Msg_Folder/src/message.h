@@ -19,6 +19,7 @@ class Message{
         ~Message();
         void save(Folder&);
         void remove(Folder&);
+        void print_folders();
     private:
         std::string content;
         std::set<Folder *> folders;
