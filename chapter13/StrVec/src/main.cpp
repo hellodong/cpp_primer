@@ -17,5 +17,11 @@ int main(int argc, char *argv[])
         sv.push_back(argv[idx]);
     }
 
+    StrVec sv2(sv);
+
+    StrVec sv3;
+
+    sv3 = sv;
+
     return 0;
 }
