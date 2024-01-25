@@ -488,3 +488,122 @@ Foo y(x);
 Foo z(std::move(x));
 ```
 我们调用move(x),它返回一个绑定到x的Foo &&。Foo的拷贝构造函数是可行的，因为我们可以将一个Foo &&转换为一个const Foo&。 用拷贝构造函数替代移动构造函数几乎肯定是安全的。一般情况下，拷贝构造函数满足对应移动构造函数的要求。
+
+##### 拷贝并交换赋值运算符和移动操作
+HasPtr版本定义了一个拷贝并交换赋值运算符，它是函数匹配和移动操作间想换关系的一个很好的实例。如果我们为此类添加一个移动构造函数，它实际上也会获得一个移动赋值运算符:
+```C++
+class HasPtr{
+    // 添加的移动构造函数
+    HasPtr(HasPtr &&p) noexcept:ps(p.ps), i(p.i) { p.ps = 0;}
+    HasPtr &operator=(HasPtr rhs) {swap(*this, rhs);return *this;}
+};
+```
+在这个版本中，我们为类添加了一个移动构造函数，它接管了给定实参的值。赋值运算符有一个非引用参数，意味着此参数要进行拷贝初始化。依赖与实参类型，拷贝初始化要么使用拷贝构造函数，要么使用移动构造函数---- 左值拷贝，右值移动。因此单一的赋值运算符实现了拷贝赋值运算符和移动赋值运算符两种功能。
+```C++
+//假定hp和hp2都是HasPtr对象
+hp = hp2;               // hp2是一个左值：hp2通过拷贝构造函数拷贝
+hp = std::move(hp2);    // 移动构造函数移动hp2
+```
+第二个赋值中，我们调用std::move将一个右值引用绑定到hp2上。在此情况下，拷贝构造函数和移动构造函数都是可行的。但是，由于实参是一个右值引用，移动构造函数时精确匹配的。移动构造函数从hp2拷贝指针，不会分配任何内存。<br>
+不管使用的时拷贝构造函数还是移动构造函数，赋值运算符的函数体都swap两个运算对象状态。当rhs离开作用域时，这个string将被销毁
+
+##### Message类的移动操作
+定义了自己拷贝构造函数和拷贝赋值运算符通常会从移动操作收益。通过定义移动操作，Message类可以用string和set的移动操作来避免拷贝contents和folders成员额外开销。<br>
+但是，除了移动folders成员，我们还必须更新每个指向原Message的Folder。我们必须删除指向旧Message的指针，并添加一个新Message的指针。移动构造函数和移动赋值运算符都需要更新Folder指针，因此我们首先定义一个操作来完成这一共同工作:
+```C++
+void Message::move_folders(Message *m)
+{
+    folders = std::move(m->folders);  // 使用set的移动赋值运算符
+    for(auto f:folders)               // 对每个folder
+    {
+        f->rmMsg(m);                  // 从folder中删除旧Message
+        f->addMsg(this);              // 将本Message添加到Folder中
+    }
+    m->folders.clear();               // 确保销毁m是无害的
+}
+```
+Message的移动构造函数和移动赋值运算符可能抛出异常，因为set插入一个元素可能抛出一个异常。因此我们未标记noexcept。函数最后对m.folders调用了clear。我们知道m.folders是有效的，但不知道它包含什么内容。由于Message的析构函数遍历folders，我们希望能确定set是空的。<br>
+Message的移动构造函数调用move来移动contents，并默认初始化自己的folders成员：
+```C++
+Message::Message(Message &&m):contents(std::move(m.contents))
+{
+    move_folders(&m);
+}
+```
+移动赋值运算符直接检查自赋值情况:
+```C++
+Message& Message::operator=(Message &&rhs)
+{
+    if (this != &rhs)
+    {
+        remove_from_folders();
+        content = std::move(rhs.content);   // 移动赋值运算符
+        move_folders(&rhs);     // 重置Folders指向本Message
+    }
+    return *this;
+}
+```
+销毁左侧运算对象要求我们从现有folders中删除指向本Message的指针，我们调用remove_from_folders来完成这一工作。完成删除工作后，我们调用move从rhs将contents移动到this对象。剩下的就是调用move_Messages来更新Folder指针了。
+
+##### 移动迭代器
+C++11标准定义了一种**移动迭代器**(move iterator) 适配器。一个移动迭代器通过改变给定迭代器的解引用运算符的行为来适配此迭代器。移动迭代器的解引用运算符生成一个右值引用。我们通过调用标准库的make_move_iterator函数将一个普通迭代器转换为一个移动迭代器。此函数接受一个迭代器函数，返回一个移动迭代器。<br>
+移动迭代器支持正常的迭代器操作，我们可以将一对移动迭代器传递给算法。特别是，可以将移动迭代器传递给uninitialized_copy:
+```C++
+void StrVec::reallocate()
+{
+    auto newcap = size() ? 2 * size():1;
+    auto newdata = alloc.allocate(newcap);
+
+    auto last = uninitialized_copy(make_move_iterator(begin()), 
+                                   make_move_iterator(end()),
+                                   newdata);
+    free();
+    elements = newdata;
+    first_free = last;
+    cap = elements + newcap;
+}
+```
+uninitialized_copy对输入序列中的每个元素调用construct来将元素拷贝到目的位置。此算法使用迭代器的解引用运算符从输入序列中提取元素。由于我们传递给它的是移动迭代器，因此解引用运算符生成的是一个右值引用，意味着construct将使用移动构造函数来构造元素。由于移动一个对象可能销毁掉原对象，因此你只有在确信算法在为一个元素赋值或将其传递给一个用户定义的函数后不再访问它时，才能将移动迭代器传递给算法。
+
+#### 右值引用和成员函数
+允许移动的成员函数通常使用与拷贝/移动构造函数和赋值运算符相同的参数模式----一个版本接受一个指向const的左值引用，第二个版本接受一致指向非const的右值引用。<br>
+例如，定义了push_back的标准库容器提供两个版本:一个版本有一个右值引用参数，而另一个版本有一个const左值引用。假定X是元素类型，那么这些容器就会定义以下两个push_back版本:
+```C++
+void push_back(const X &);  // 拷贝: 绑定到任意类型的X
+void push_back(X &&);       // 移动：只能绑定到类型X的可修改右值
+```
+此版本对于非const的右值是精确匹配的，因此我们传递一个可修改的右值时，编译器会选择运行这个版本。此版本会窃取数据。当我们希望从实参“窃取”数据时，通常传递一个右值引用。为了达到这一目的，实参不能是const的。类似，从一个对象进行拷贝的操作不应该改变对象，因此通常不需要定义一个接受普通的X&参数的版本。
+- 区分移动和拷贝的重载函数通常有一个版本接受一个const T&,而另一个版本接受一个T&&。
+
+我们将为StrVec类定义另一个版本的push_back:
+```C++
+void StrVec::push_back(const std::string &s)
+{
+    chk_n_alloc();
+    alloc.construct(first_free++, s);
+}
+
+void StrVec::push_back(std::string &&s)
+{
+    chk_n_alloc();
+    alloc.construct(first_free++, std::move(s));
+}
+
+```
+
+这两个成员几乎是相同的。差别在于右值引用版本调用move来将其参数传递给construct。如前所述，construct函数使用其第二个和随后的实参的类型来确定使用哪个构造函数。由于move返回一个右值引用，传递给construct的实参类型是string &&。因此会使用string的移动构造函数来构造新元素。<br>
+当我们调用push_back时，实参类型决定了新元素是拷贝还是移动到容器:
+```C++
+StrVec vec;
+string s = "some string or another";
+vec.push_back(s);  // 调用push_back(const string &)
+vec.push_back("done");  // 调用push_back(string &&)
+```
+
+##### 右值和左值引用成员函数
+C++11新标准仍然允许向右值赋值,旧标准也支持:
+```C++
+string s1 = "a value", s2 = "another";
+auto n = (s1 + s2).find('a');
+```
+在此情况下，我们希望强制左侧运算对象是一个左值。

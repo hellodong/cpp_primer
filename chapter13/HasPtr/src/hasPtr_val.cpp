@@ -7,11 +7,8 @@
 class HasPtr{
     friend std::ostream& print(std::ostream &os, HasPtr &p);
     public:
-        HasPtr(const std::string &s = std::string()):
-            ps(new std::string(s)), i(0) 
-            {}
-        HasPtr(const HasPtr &p):ps(new std::string(*p.ps)), i(p.i)
-            {}
+        HasPtr(const std::string &s = std::string()): ps(new std::string(s)), i(0) {}
+        HasPtr(const HasPtr &p):ps(new std::string(*p.ps)), i(p.i) {}
         HasPtr &operator=(const HasPtr &rhs);
 
         ~HasPtr()
