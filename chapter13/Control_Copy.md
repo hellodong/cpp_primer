@@ -606,4 +606,59 @@ C++11新标准仍然允许向右值赋值,旧标准也支持:
 string s1 = "a value", s2 = "another";
 auto n = (s1 + s2).find('a');
 ```
-在此情况下，我们希望强制左侧运算对象是一个左值。
+在此情况下，我们希望强制左侧运算对象是一个左值。我们指出this的左右值属性方式与const成员函数相同。在参数列表后放置一个引用限定符:
+```C++
+class Foo{
+    public:
+        Foo &operator=(const Foo&) &;  //只能向可修改的左值赋值
+};
+```
+引用限定符可以是&或&&，分别指出this可以指向一个左值或右值。类似const限定符，引用限定符只能用于(非static)成员函数，且必须同时出现在函数的声明和定义中。<br>
+一个函数可以同时用const和引用限定。在此情况下，引用限定符必须跟随在const限定符之后:
+```C++
+class Foo{
+    public:
+        Foo someMem() & const;  // 错误: const限定符必须在前
+        Foo anotherMem() const &;// 正确
+};
+```
+
+##### 重载和引用函数
+成员函数可以根据是否有const来区分重载版本，引用限定符也可以区分重载版本。而且我们可以综合引用限定符和const来区分一个成员函数的重载版本。
+```C++
+class Foo{
+    public:
+        Foo sorted() &&;        //用于改变的右值
+        Foo sorted() const &;   //用于任何类型的Foo;
+    private:
+        std::vector<int> data;
+};
+
+// 本对象为右值，因此可以原址排序
+Foo Foo::sorted() &&
+{
+    sort(data.begin(), data.end());
+    return *this;
+}
+
+// 本对象是const或是一个左值，哪种情况我们都不能对其进行原址排序
+Foo Foo::sorted() const &
+{
+    Foo ret(*this);                             // 拷贝一个副本
+    sort(ret.data.begin(), ret.data.end());     // 排序副本
+    return ret;                                 // 返回副本
+}
+```
+当我们对一个右值进行sorted时，它可以安全地直接对data成员进行排序。当对一个const右值或一个左值进行sorted时，因此就需要在排序前拷贝data。编译器会根据调用sorted地对象地左值/右值属性确定哪个sorted版本。<br>
+当我们定义const成员函数时，可以定义两个版本，唯一地差别是一个版本有const限定而另一个没有。引用限定规则不一样。如果定义两个或两个以上具有相同名字和相同参数列表成员函数，就必须所有都加上引用限定符:
+```C++
+class Foo{
+    public:
+        Foo sorted() &&;
+        Foo sorted() const ;    //错误：必须加上限定符
+
+        using Comp = bool(const int &, const int &);
+        Foo sorted(Comp *);         // 正确
+        Foo sorted(Comp *) const;   // 正确: 两个版本都没有引用限定符
+};
+```
