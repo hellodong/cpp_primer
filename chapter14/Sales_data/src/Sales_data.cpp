@@ -1,4 +1,5 @@
 
+
 #include "Sales_data.h"
 
 
@@ -55,3 +56,4 @@ Sales_data &Sales_data::combine(const Sales_data &item)
 
     return *this;
 }
+
