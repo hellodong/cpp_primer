@@ -76,3 +76,26 @@ Sales_data data;
 data << cout;   // 如果operator<<是Sales_data的成员
 ```
 假设输入输出运算符是某个类的成员，则它们也必须是istream或ostream的成员。然而，这两个类属于标准库，并且我们无法给标准库中的类添加任何成员。因此，如果我们希望为类自定义IO运算符，则必须将其定义成非成员函数。当然，IO运算符通常需要读写类的非公有数据成员，所以IO运算符一般被声明为友元。
+
+#### 重载输入运算符>>
+通常情况下，输入运算符的第一个形参是运算符将要读取的流引用，第二个形参是将要读入到对象的引用。该运算符通常会返回某个给定流的引用。第二个形参必须是个非常量。 
+
+##### Sales_data的输入运算符
+我们将按照如下形式编写Sales_data的输入运算符:
+```C++
+std::istream & operator>>(std::istream &is, Sales_data &rhm)
+{
+    double price = 0;
+    is >> rhm.bookNo >> rhm.units_sold >> price;
+    if (is)
+    {
+        rhm.revenue = rhm.units_sold * price;
+    }
+    else 
+    {
+        rhm = Sales_data(); // 输入失败：对象被赋予默认状态
+    }
+    return is;
+}
+```
+除了if语句之外，这个定义与之前read函数完全一样。if语句检查读取操作是否成功，如果发生了IO错误，则运算符将给定的对象重置为空Sales_data,这样可以确保对象处于正确的状态。

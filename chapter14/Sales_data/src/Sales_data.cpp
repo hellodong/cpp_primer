@@ -1,21 +1,28 @@
 
-
 #include "Sales_data.h"
 
 
 //output
-std::ostream & operator<<(std::ostream &os, const Sales_data &entry)
+std::ostream& operator<<(std::ostream &os, const Sales_data &entry)
 {
-    os << "bookNo: " << entry.bookNo << ", units_sold:" << entry.units_sold << ", revenue" << entry.revenue;
+    os << "bookNo: " << entry.bookNo << ", units_sold: " << entry.units_sold << ", revenue: " << entry.revenue;
     return os;
 }
 
 //input
-std::istream & operator>>(std::istream &is, Sales_data &rhm)
+std::istream& operator>>(std::istream &is, Sales_data &rhm)
 {
     double price = 0;
     is >> rhm.bookNo >> rhm.units_sold >> price;
-    rhm.revenue = rhm.units_sold * price;
+    if (is)
+    {
+        rhm.revenue = rhm.units_sold * price;
+    }
+    else
+    {
+        rhm = Sales_data();
+    }
+
     return is;
 }
 
@@ -33,7 +40,7 @@ Sales_data operator+(const Sales_data &lhm, const Sales_data &rhm)
     return tmp;
 }
 
-Sales_data &Sales_data::operator+=(const Sales_data &rhm)
+Sales_data& Sales_data::operator+=(const Sales_data &rhm)
 {
     if (bookNo != rhm.bookNo)
     {
@@ -45,7 +52,7 @@ Sales_data &Sales_data::operator+=(const Sales_data &rhm)
     return *this;
 }
 
-Sales_data &Sales_data::combine(const Sales_data &item)
+Sales_data& Sales_data::combine(const Sales_data &item)
 {
     if (bookNo != item.bookNo)
     {

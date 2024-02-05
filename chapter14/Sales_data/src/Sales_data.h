@@ -16,7 +16,7 @@ public:
 	explicit Sales_data(std::string s):Sales_data(s,0,0.0) { }
 
 	Sales_data &combine(const Sales_data &);
-    Sales_data &operator+=(const Sales_data &rhm);
+    	Sales_data &operator+=(const Sales_data &rhm);
 private:
     std::string bookNo;
     unsigned int units_sold=0;
