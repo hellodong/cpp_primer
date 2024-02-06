@@ -1,7 +1,7 @@
 ## Overload operator and Conversion
 使用运算符重载可以使我们的程序更易于编写和阅读。举个例子，因为在Sales_item类中定义了输入，输出和加法运算符，所以可以通过下述形式输出两个Sales_item的和:
 ```C++
-std::cout << item1 + item 2; // 输出两个Sales_item的和
+std::cout << item1 + item2; // 输出两个Sales_item的和
 ```
 
 ### 基本概念
@@ -63,7 +63,7 @@ IO标准库分别使用>>和<< 执行时输入和输出操作。这两个运算�
 ```C++
 std::ostream & operator<<(std::ostream &os, const Sales_data &entry)
 {
-    os << "bookNo: " << entry.bookNo << ", units_sold:" << entry.units_sold << ", revenue" << entry.revenue;
+    os << "bookNo: " << entry.bookNo << ", units_sold: " << entry.units_sold << ", revenue: " << entry.revenue;
     return os;
 }
 ```
@@ -99,3 +99,9 @@ std::istream & operator>>(std::istream &is, Sales_data &rhm)
 }
 ```
 除了if语句之外，这个定义与之前read函数完全一样。if语句检查读取操作是否成功，如果发生了IO错误，则运算符将给定的对象重置为空Sales_data,这样可以确保对象处于正确的状态。
+
+##### 输入时的错误
+如果读取操作失败，则price的值将是未定义的。因此，在使用price前我们需要首先检查输入流的合法性，然后才能执行计算并将结果存入revenue。如果发生了错误，我们无须在意到底是哪部分输入失败，只要将一个新的默认初始化的Sales_data对象赋予item从而将其重置为空Sales_data就可以了。执行这样的赋值后，item的bookNo成员将是一个空string,revenue和units_sold。
+
+##### 标识错误
+一些输入运算符需要做更多数据验证工作。例如，我们的输入运算符可能需要检查bookNo是否符合规范的格式。在这样的例子中，即使从技术上来看IO是成功的，输入运算符也应该设置流的条件状态以标识出失败信息。通常情况下，输入运算符只设置failbit。
