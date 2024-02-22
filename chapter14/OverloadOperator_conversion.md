@@ -105,3 +105,27 @@ std::istream & operator>>(std::istream &is, Sales_data &rhm)
 
 ##### 标识错误
 一些输入运算符需要做更多数据验证工作。例如，我们的输入运算符可能需要检查bookNo是否符合规范的格式。在这样的例子中，即使从技术上来看IO是成功的，输入运算符也应该设置流的条件状态以标识出失败信息。通常情况下，输入运算符只设置failbit。
+
+### 算术和关系运算符
+通常情况下，我们把算术和关系运算符定义成非成员函数以允许对左侧或右侧的运算对象进行转换。因为这些运算符一般不需要改变运算对象的状态，所以形参都是常量的引用。<br>
+算术运算符通常会计算它的两个运算对象并得到一个新值，这个值有别于任意一个运算对象，常常位于一个局部变量之内，操作完成后返回该局部变量的副本为其结果。如果定义了算术运算符，则一般也会定义一个对应的复合赋值运算符。此时，最有效的方式是使用复合赋值运算符来定义算术运算符:
+```C++
+Sales_data operator+(const Sales_data &lhm, const Sales_data &rhm)
+{
+    Sales_data sum(lhm);
+    sum += rhm;
+    return sum;
+}
+
+Sales_data& Sales_data::operator+=(const Sales_data &rhm)
+{
+    if (bookNo != rhm.bookNo)
+    {
+        return *this;
+    }
+
+    units_sold += rhm.units_sold;
+    revenue +=rhm.revenue;
+    return *this;
+}
+```

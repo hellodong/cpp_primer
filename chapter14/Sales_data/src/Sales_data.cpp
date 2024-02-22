@@ -26,18 +26,21 @@ std::istream& operator>>(std::istream &is, Sales_data &rhm)
     return is;
 }
 
+bool operator==(const Sales_data &lhs, const Sales_data &rhs)
+{
+    return lhs.bookNo == rhs.bookNo && lhs.units_sold == rhs.units_sold && lhs.revenue == rhs.revenue;
+}
+
+bool operator !=(const Sales_data &lhs, const Sales_data &rhs)
+{
+    return !(lhs == rhs);
+}
+
 Sales_data operator+(const Sales_data &lhm, const Sales_data &rhm)
 {
-    Sales_data tmp(lhm);
-
-    if (lhm.bookNo != rhm.bookNo)
-    {
-        return tmp;
-    }
-
-    tmp.units_sold += rhm.units_sold;
-    tmp.revenue += rhm.revenue;
-    return tmp;
+    Sales_data sum(lhm);
+    sum += rhm;
+    return sum;
 }
 
 Sales_data& Sales_data::operator+=(const Sales_data &rhm)
