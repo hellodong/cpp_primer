@@ -152,3 +152,44 @@ bool operator!=(const Sales_data &lhs, const Sales_data &rhs)
 定义了相等运算符的类常常(但不总是)包含关系运算符。特别是，因为关联容器和一些算法要用到小于运算符，所以定义operator<会比较有用。
 - 定义顺序关系，令其与关联容器中对关键字的要求一致
 - 如果类同时也含有==运算符的话，则定义一种关系令其与==保持一致。特别是，如果两个对象是!=的，那么一个对象应该<另外一个。
+
+### 赋值运算符
+之前介绍过拷贝赋值和移动赋值运算符，它们可以把类的一个对象赋值给类的另一个对象。此外类还可以定义其他赋值运算符以使用别的类型作为右侧运算对象。<br>
+在拷贝赋值和移动赋值运算符之外，标准库vector类还定义了第三种赋值运算符，该运算符接受花括号内的元素列表作为参数:
+```C++
+std::vector<std::string> v;
+v = {"a", "an",  "the"};
+```
+同样也可以把这个运算符添加到StrVec类中:
+```C++
+class StrVec{
+    public:
+        StrVec &operator=(std::initializer_list<std::string>);
+};
+
+StrVec &StrVec::operator=(std::initializer_list<std::string> il)
+{
+    auto newdata = alloc_n_copy(il.begin(), il.end());
+    free();
+    elements = newdata.first;
+    first_free = cap = newdata.second;
+    return *this;
+}
+```
+为了与内置类型的赋值运算符保持一致，这个新的赋值运算符将返回其左侧运算对象的引用。
+
+##### 复合赋值运算符
+复合赋值运算符不非得是类的成员，不过我们还是倾向于把包括复合赋值在内的所有赋值运算都定义在类的内部。为了与内置类型的复合赋值保持一致，类中的复合赋值运算符也要返回其左侧运算对象的引用。Sales_data类中复合赋值运算符的定义:
+```C++
+Sales_data& Sales_data::operator+=(const Sales_data &rhm)
+{
+    if (bookNo != rhm.bookNo)
+    {
+        return *this;
+    }
+
+    units_sold += rhm.units_sold;
+    revenue +=rhm.revenue;
+    return *this;
+}
+```
