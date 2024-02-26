@@ -129,3 +129,26 @@ Sales_data& Sales_data::operator+=(const Sales_data &rhm)
     return *this;
 }
 ```
+#### 相等运算符
+C++中的类通过定义相等运算符来检验两个对象是否相等。它们会比较对象的每一个数据成员，只有当所有对应成员都相等时才认为两个对象相等。
+```c++
+bool operator==(const Sales_data &lhs, const Sales_data &rhs)
+{
+    return lhs.bookNo == rhs.bookNo && lhs.units_sold == rhs.units_sold && lhs.revenue == rhs.revenue;
+}
+
+bool operator!=(const Sales_data &lhs, const Sales_data &rhs)
+{
+    return !(lhs == rhs);
+}
+```
+从这些函数中体现出来的设计准则:
+- 一个类含有判断两个对象是否相等的操作，则它显然应该把函数定义成operator==而非一个普通的命名函数：因为用户肯定希望能使用==比较对象
+- 如果类定义了operator==, 则该运算符应该能判断一组给定的对象中是否含有重复数据
+- 通常情况下，相等运算符应该具有传递性，换句话说，如果a==b和b==c都为真，则a==c应该为真
+- 如果类定义了operator==,则这个类也应该定义operator!=。对于用户来说，当它们能使用==时肯定也希望能时候!=,反之亦然
+
+#### 关系运算符
+定义了相等运算符的类常常(但不总是)包含关系运算符。特别是，因为关联容器和一些算法要用到小于运算符，所以定义operator<会比较有用。
+- 定义顺序关系，令其与关联容器中对关键字的要求一致
+- 如果类同时也含有==运算符的话，则定义一种关系令其与==保持一致。特别是，如果两个对象是!=的，那么一个对象应该<另外一个。

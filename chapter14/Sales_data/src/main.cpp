@@ -15,6 +15,8 @@ int main(void)
     Sales_data item2;
     std::cin >> item2;
 
+    std::cout << "item1 " << (item1 == item2 ? "==":"!=") << " item2" << std::endl;
+
     std::cout << "only print input item2:" << std::endl;
     std::cout << item2 << std::endl;
 
