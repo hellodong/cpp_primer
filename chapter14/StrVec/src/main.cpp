@@ -1,7 +1,6 @@
 
 
 #include "strVec.h"
-#include <iostream>
 
 int main(int argc, char *argv[])
 {
@@ -28,6 +27,10 @@ int main(int argc, char *argv[])
     StrVec sv4;
     sv4 = {"first", "second", "third"};
     std::cout <<"sv4:    " <<sv4;
+
+    std::cout <<"sv4[0]: " << sv4[0] << std::endl;
+    std::cout << "sv4[1]: " << sv4[1] << std::endl;
+    std::cout << "sv4[2]: " << sv4[2] << std::endl;
 
     return 0;
 }

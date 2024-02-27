@@ -16,6 +16,8 @@ class StrVec {
         StrVec(const StrVec &);
         StrVec &operator=(const StrVec &);
         StrVec &operator=(std::initializer_list<std::string>);
+        std::string &operator[](size_t n);
+        const std::string &operator[](size_t n) const;
         ~StrVec();
         void push_back(const std::string &);
         size_t size() const {return first_free - elements;}

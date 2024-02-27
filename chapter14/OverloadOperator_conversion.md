@@ -193,3 +193,32 @@ Sales_data& Sales_data::operator+=(const Sales_data &rhm)
     return *this;
 }
 ```
+
+### 下标运算符
+标识容器的类通常可以通过元素在容器中的位置访问元素，这些类一般会定义下标运算符operator[]。
+- 下标运算符必须是成员函数。
+
+为了与下标的原始定义兼容，下标运算符通常以所访问元素的引用作为返回值，这样的好处是下标可以出现在赋值运算符任意一端。进一步，我们最好同时定义下标运算符的常量版本和非常量版本，当作用于一个常量对象时，下标运算符返回常量引用以确保我们不会给返回的对象赋值。<br>
+我们按照如下形式定义StrVec的下标运算符:
+```C++
+class StrVec{
+    public:
+        std::string &operator[](size_t n)
+        {
+            return elements[n];
+        }
+        const std::string &operator[](size_t n) const
+        {
+            return elements[n];
+        }
+};
+```
+下标运算符返回的是元素的引用，当StrVec是非常量时，我们可以给元素赋值；当我们对常量取下标时，不能为其赋值:
+```C++
+const StrVec cvec = svec;
+if (svec.size() && svec[0].empty())
+{
+    svec[0] = "zero";
+    cvec[0] = "zip";        // 错误：对cvec下标返回的是常量引用
+}
+```

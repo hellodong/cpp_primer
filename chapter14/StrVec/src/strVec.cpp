@@ -42,6 +42,16 @@ StrVec &StrVec::operator=(std::initializer_list<std::string> il)
     return *this;
 }
 
+std::string &StrVec::operator[](size_t n)
+{
+    return elements[n];
+}
+
+const std::string &StrVec::operator[](size_t n) const
+{
+    return elements[n];
+}
+
 StrVec::~StrVec()
 {
     free();
