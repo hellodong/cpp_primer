@@ -222,3 +222,62 @@ if (svec.size() && svec[0].empty())
     cvec[0] = "zip";        // 错误：对cvec下标返回的是常量引用
 }
 ```
+
+### 递增和递减运算符
+在迭代器类中通常会实现递增运算符(++)和递减运算符(--),这两种运算符使得类可以在元素的序列中前后移动。C++语言并不要求递减和递增运算符必须是类的成员，但是因为它们改变的正好是所操作对象的状态，所以建议将其设定为成员函数。<br>
+对于内置类型来说，递增和递减运算符既有前置版本也有后置。同样，我们也应该为类定义两个版本的递增和递减运算符。
+
+##### 定义前置递增/递减运算符
+我们在StrBlobPtr类中定义它们:
+```C++
+class StrBlobPtr{
+    public:
+        // 递增和递减运算符
+        StrBlobPtr &operator++();   // 前置运算符
+        StrBlobPtr &operator--();
+};
+
+// 前置版本: 返回递增/递减对象引用
+StrBlobPtr &StrBlobPtr::operator++()
+{
+    // 如果curr已经指向了容器的尾后位置，则无法递增它
+    check(curr, "increament past end of StrBlobPtr");
+    ++curr;         // 墙curr在当前状态下向前移动一个元素
+    return *this;
+}
+
+StrBlobPtr &StrBlobPtr::operator--()
+{
+    // curr是0，则继续递减它将产生一个无效下标
+    --curr;             //curr在当前状态下向后移动一个元素
+    check(curr, "decreament past begin of StrBlobPtr");
+    return *this;
+}
+
+```
+
+##### 区分前置和后置运算符
+同时定义前置和后置运算符，必须首先解决一个问题，普通的重载形式无法区分这两钟情况。前置和后置版本使用的是同一个符号,意味着其重载版本所用的名字将是相同的，并且运算对象的数量和类型也是相同的。<br>
+为了解决这个问题，后置版本接受一个额外的（不被使用的)int类型形参。当我们使用后置运算符时，编译器为这个形参提供一个值为0的实参。尽管从语法上来说后置函数可以使用这个额外的形参，但是在实际过程中通常不会这么做。这个形参的唯一作用就是区分前置版本和后置版本的函数，而不是真的要在实现后置版本时参与运算。
+```C++
+class StrBlobPtr{
+    public:
+        StrBlobPtr operator++(int); //后置运算符
+        StrBlobPtr operator--(int);
+};
+
+StrBlobPtr StrBlobPtr::operator++(int)
+{
+    StrBlobPtr ret(*this);
+    ++*this;
+    return ret;
+}
+
+StrBlobPtr StrBlobPtr::operator--(int)
+{
+    StrBlobPtr ret(*this);
+    --*this;
+    return ret;
+}
+```
+- 为了与内置版本保持一致，后置运算符应该返回对象的原值，返回的形式是一个值而非引用
