@@ -17,6 +17,15 @@ class StrBlobPtr{
         StrBlobPtr &operator--();
         StrBlobPtr operator++(int);
         StrBlobPtr operator--(int);
+        std::string &operator*() const
+        {
+           auto p = check(curr, "dereference past end");
+           return (*p)[curr];
+        }
+        std::string *operator->() const
+        {
+            return &this->operator*();
+        }
         StrBlobPtr &incr();
         std::string &deref() const;
     private:

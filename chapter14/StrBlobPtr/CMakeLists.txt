@@ -21,11 +21,13 @@ endif()
 
 
 add_executable(strblob_ptr src/strblobptr.cpp src/strblob.cpp src/main.cpp)
+add_executable(blob_input src/strblobptr.cpp src/strblob.cpp src/blob_input.cpp)
 
 target_compile_features(strblob_ptr PUBLIC cxx_auto_type)
+target_compile_features(blob_input PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS strblob_ptr 
+install(TARGETS strblob_ptr blob_input
 	RUNTIME DESTINATION usr/bin)
 

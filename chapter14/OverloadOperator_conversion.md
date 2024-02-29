@@ -266,10 +266,11 @@ class StrBlobPtr{
         StrBlobPtr operator--(int);
 };
 
+// 后置版本: 递增/递减对象的值，但是返回原值
 StrBlobPtr StrBlobPtr::operator++(int)
 {
-    StrBlobPtr ret(*this);
-    ++*this;
+    StrBlobPtr ret(*this);  // 记录当前的值
+    ++*this;                // 向前移动一个元素，前置++需要检查递增的有效性
     return ret;
 }
 
@@ -281,3 +282,50 @@ StrBlobPtr StrBlobPtr::operator--(int)
 }
 ```
 - 为了与内置版本保持一致，后置运算符应该返回对象的原值，返回的形式是一个值而非引用
+
+### 成员访问运算符
+在迭代器类和智能指针类中常常用到解引用(*)和箭头运算符(->)。我们以如下形式向StrBlobPtr类添加这两种运算符:
+```C++
+class StrBlobPtr{
+    public:
+        std::string &operator*() const
+        {
+           auto p = check(curr, "dereference past end");
+           return (*p)[curr];       // *p 是对象所指的vector
+        }
+        std::string *operator->() const
+        {
+            return &this->operator*();
+        }
+};
+```
+- 箭头运算符必须是类的成员。解引用运算符通常也是类的成员，尽管并非必须如此
+
+我们将这两个运算符定义成const成员，获取一个元素并不会改变StrBlobPtr对象状态。同时它们的返回值分别是非常亮string的引用或指针，因为一个StrBlobPtr只能绑定到非常量的StrBlob对象。
+```C++
+int main(int argc, char *argv[])
+{
+    if (argc < 2)
+    {
+        std::cout <<"usage: "<< argv[0] << " <arg1> <arg2> ..." << std::endl;
+        return -1;
+    }
+
+    StrBlob blob_input;
+    for(int idx = 1;idx < argc;idx++)
+    {
+        blob_input.push_back(argv[idx]);
+    }
+    StrBlobPtr input_ptr(blob_input); // input_ptr指向blob_input中的vector
+
+    std::cout << "Blob Input:"<< blob_input.size() <<" word(s)" <<std::endl;
+    for (size_t idx = 0;idx < blob_input.size();idx++)
+    {
+        std::cout << "           " << *input_ptr;   //打印blob_input中vector元素值
+        std::cout << ": "<<(input_ptr++)->size() << std::endl;  //打印blob_input中元素值大小，并累加1
+    }
+
+    return 0;
+}
+```
+##### 对箭头运算符返回值的限定
