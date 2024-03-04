@@ -44,16 +44,17 @@ int main(int argc,char *argv[])
         }
         StrBlobPtr input_ptr(blob_input);
 
+        #if 0
         std::cout << "Blob Input:"<< blob_input.size() <<" word(s)" <<std::endl;
         for (size_t idx = 0;idx < blob_input.size();idx++)
         {
             std::cout << "           " << *input_ptr << ": "<<(input_ptr++)->size() << std::endl;
         }
+        #else
+        StrBlobPtr *pptr = &input_ptr;
+        std::cout << **pptr << (pptr)->deref() << std::endl;
+        #endif
     }
-#if 0
-    std::cout << "pop back" << std::endl;
-    blob.pop_back();
-    std::cout << "back: " << blob.back() << std::endl;
-#endif
+
     return 0;
 }
