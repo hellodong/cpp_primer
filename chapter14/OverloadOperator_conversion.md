@@ -354,4 +354,39 @@ int i = -42;
 absInt absObj;
 int ui = absObj(i);
 ```
-即使absObj只是一个对象而非函数，我们也能调用该对象。调用对象实际上是再运行重载的调用运算符。在此例中，该运算符接受一个int值并返回其绝对值。
+即使absObj只是一个对象而非函数，我们也能调用该对象。调用对象实际上是在运行重载的调用运算符。在此例中，该运算符接受一个int值并返回其绝对值。如果类定义了调用运算符，则该类的对象称作**函数对象**
+
+##### 含有状态的函数对象类
+函数对象类除了operator()之外也可以包含其他成员。举个例子，我们将定义一个打印string实参内容的类:
+```C++
+class PrintString{
+    public:
+        PrintString(std::ostream &lhs = std::cout, char rhs = ' '):os(lhs), sep(rhs)
+        {}
+        std::ostream &operator()(std::string str) const
+        {
+            return os<< str << sep;
+        }
+    private:
+        std::ostream &os;
+        char sep;
+};
+
+```
+当定义PrintString对象时，对于分隔符及输出流既可以使用默认值也可以提供我们自己的值:
+```C++
+PrintString print;
+print("hello");
+```
+可以使用标准库for_each算法和我们自己的PrintString类来打印容器的内容:
+```C++
+std::vector<std::string> vs;
+for(int idx = 1; idx < argc;idx++)
+{
+    vs.push_back(argv[idx]);
+}
+std::cout << "output "<< argc -1 << " word(s) :"<< std::endl;
+
+std::for_each(vs.begin(), vs.end(), PrintString(std::cout, '\n'));
+```
+for_each的第三个参数是类型PrintString的一个临时对象。
