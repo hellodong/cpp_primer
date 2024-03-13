@@ -340,3 +340,18 @@ point->mem的执行过程如下:
 2. point是定义了operator->的类的一个对象，则我们使用point.operator->()的结果来获取mem。其中，如果该结果是一个指针，执行第一步；如果该结果还有重载的operator->(),则重复当前步骤
 
 - 重载的箭头运算符必须返回类的指针或自定义了箭头运算符的某个类的对象
+
+### 函数调用运算符
+如果类重载了函数调用运算符，则我们可以像使用函数一样使用该类的对象。如下例子，absInt的struct含有一个运算符，该运算符负责返回其参数的绝对值:
+```C++
+struct absInt{
+    int operator(int val) const {
+        return val < 0: -val? val;
+    }
+};
+
+int i = -42;
+absInt absObj;
+int ui = absObj(i);
+```
+即使absObj只是一个对象而非函数，我们也能调用该对象。调用对象实际上是再运行重载的调用运算符。在此例中，该运算符接受一个int值并返回其绝对值。
