@@ -354,7 +354,42 @@ int i = -42;
 absInt absObj;
 int ui = absObj(i);
 ```
-即使absObj只是一个对象而非函数，我们也能调用该对象。调用对象实际上是再运行重载的调用运算符。在此例中，该运算符接受一个int值并返回其绝对值。
+即使absObj只是一个对象而非函数，我们也能调用该对象。调用对象实际上是在运行重载的调用运算符。在此例中，该运算符接受一个int值并返回其绝对值。如果类定义了调用运算符，则该类的对象称作**函数对象**
+
+##### 含有状态的函数对象类
+函数对象类除了operator()之外也可以包含其他成员。举个例子，我们将定义一个打印string实参内容的类:
+```C++
+class PrintString{
+    public:
+        PrintString(std::ostream &lhs = std::cout, char rhs = ' '):os(lhs), sep(rhs)
+        {}
+        std::ostream &operator()(std::string str) const
+        {
+            return os<< str << sep;
+        }
+    private:
+        std::ostream &os;
+        char sep;
+};
+
+```
+当定义PrintString对象时，对于分隔符及输出流既可以使用默认值也可以提供我们自己的值:
+```C++
+PrintString print;
+print("hello");
+```
+可以使用标准库for_each算法和我们自己的PrintString类来打印容器的内容:
+```C++
+std::vector<std::string> vs;
+for(int idx = 1; idx < argc;idx++)
+{
+    vs.push_back(argv[idx]);
+}
+std::cout << "output "<< argc -1 << " word(s) :"<< std::endl;
+
+std::for_each(vs.begin(), vs.end(), PrintString(std::cout, '\n'));
+```
+for_each的第三个参数是类型PrintString的一个临时对象。
 
 #### lambda是函数对象
 上述PrintString对象作为调用for_each的实参类似于我们之前编写的lambda表达式程序。当我们编写了一个lambda后，编译器将该表达式翻译成一个未命名类的未命名对象。在lambda表达式产生的一个重载的函数调用运算符。默认情况下lambda不能改变它捕获的变量，由lambda产生的类当中的函数调用运算符是一个const成员函数。
@@ -366,3 +401,4 @@ lambda表达式产生的类不含默认构造函数、赋值运算符及默认�
 
 #### 标准库定义的函数对象
 标准库定义了一组表示算术运算符、关系运算符和逻辑运算符的类，每个类分别定义了一个执行命名操作的调用运算符。plus类定义一对运算对象执行+的操作;modulus定义了一个调用运算符执行二元%操作;equal_to类执行==。
+
