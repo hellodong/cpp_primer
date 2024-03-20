@@ -402,3 +402,17 @@ lambda表达式产生的类不含默认构造函数、赋值运算符及默认�
 #### 标准库定义的函数对象
 标准库定义了一组表示算术运算符、关系运算符和逻辑运算符的类，每个类分别定义了一个执行命名操作的调用运算符。plus类定义一对运算对象执行+的操作;modulus定义了一个调用运算符执行二元%操作;equal_to类执行==。
 
+| 算术 | 关系 | 逻辑 |
+|--|--|--|
+| plus\<Type\> | equal_to\<Type\>| logical_and\<Type\> |
+| minus\<Type\> | not_equal_to\<Type\> | logical_or\<Type\> |
+| multiplies\<Type\> | greater\<Type\> | logical_not\<Type\> |
+| divides\<Type\> | greater_equal\<Type\> |  |
+| modules\<Type\> | less\<Type\> | |
+| negate\<Type\> | less_equal\<Type\> | |
+
+[代码实现](./std_func_object/src/std_func_obj.cpp)
+
+
+
+
