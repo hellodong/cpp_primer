@@ -420,6 +420,49 @@ std::sort (svec.begin(), svec.end(), std::greater<std::string>());
 ```
 第三个参数是greater<std::string()> 的一个未命名对象，因此当sort比较元素时，不再使用默认的<运算符，而是调用给定的greater的函数对象。标准库规定其函数对象对于指针同样适用。
 
+#### 可调用对象与function
+C++语言中有几种可调用的对象: 函数、函数指针、lambada表达式、bind创建的对象以及重载了函数调用运算符的类。 两个不同类型的可调用对象可能共享同一**调用形式**：指明了调用返回的类型以及传递给调用的实参类型。一种调用形式对应一个函数类型:
+```C++
+int (int,int)
+```
+对于可调用对象共享同一种调用形式的情况，有时我们会希望把他们看成具有相同类型。如下，不同类型的可调用对象:
+```C++
+int add(int i,j) {return i+j};
+
+auto mod = [] (int i, j) {return i % j};
+
+struct divide {
+    int operator() (int denominator, int divisor)
+    {
+        return denominator / divisor;
+    }
+};
+```
+上面类型各不相同，但是共享同一种调用形式:
+```C++
+int (int, int);
+```
+我们使用函数表通过map来实现，map定义如下形式,以及将add指针添加到binops中:
+```c++
+// 构建从运算符到函数指针的映射关系
+map<string, int (*)(int,int)> binops;
+
+// 正确： add是一个指向正确类型的函数指针
+binops.inseat({"+", add});
+```
+但是我们不能将mod或者divide出入binops，问题在于mod是个lambda表达式，每个lambda有它自己的类类型与binops中的值类型不匹配。
+
+##### 标准库function类型
+我们可以使用**function**的新的标准库类型解决上述问题，function定义在functional头文件中
+
+| | |
+|-- | -- |
+| function\<T\> f; | f是一个用来存储可调用对象的空function,<br>这些可调用对象的调用形式应该与函数类型T相同 |
+| function\<T\> f(nullptr); | 显示构造空function |
+| function\<T\> f(obj); | 在f中存储可调用对象obj的副本 |
+| f | 将f作为条件：f含有一个可调用对象为真；否则为假 |
+| f(args) | 调用f中对象，参数是args |
+
 
 
 
