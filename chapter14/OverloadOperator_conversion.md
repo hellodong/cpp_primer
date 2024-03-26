@@ -463,6 +463,44 @@ binops.inseat({"+", add});
 | f | 将f作为条件：f含有一个可调用对象为真；否则为假 |
 | f(args) | 调用f中对象，参数是args |
 
+function是一个模板，和我们使用过的其他模板一样，当创建一个具体的function类型时我们必须提供额外的工具。参考其他模板，我们在一对尖括号内指定类型:
+```C++
+function<int (int, int)>
+```
+在这里我们声明了一个function类型，它可以表示接受两个int、返回一个int的可调用对象。
+```C++
+function<int(int, int)> f1 = add;        // 函数指针
+function<int(int, int)> f2 = divide();   // 函数对象类的对象
+function<int(int, int)> f3 = [] (int i, int j) {return i *j;}; //lambda
+
+cout << f1(4,2) << endl;
+cout << f2(4,2) << endl;
+cout << f3(4,2) << endl;
+```
+使用这个function类型我们可以重新定义map:
+```C++
+map<string, function<int(int, int)>> binops;
+```
+我们能把所有可调用对象，包括函数指针、lambda或者函数对象在内，都添加到map中:
+```C++
+map<string, function<int(int, int)>> binops = {
+    {"+", add},
+    {"-", std::minus<int>()},
+    {"/", divide()},
+    {"*", [](int i, int j) {return i * j;}},
+    {"%", mode}
+};
+```
+我们的map中包含5个元素，尽管其中可调用对象类型各不相同，我们仍能够把所有这些类都存储在同一个function<int (int, int)> 类中。一如既往，我们索引map时将得到关联值的一个引用。我们索引binops,将得到function对象引用。function类型重载了调用运算符，该运算符接受它自己的实参然后将其传递给存好的可调用对象:
+```C++
+binops["+"](10, 5); // 调用 add(10, 5)
+binops["-"](10, 5); // 使用minus<int> 对象的调用运算符
+binops["/"](10, 5); // 使用divide对象的调用运算符
+binops["*"](10, 5); // 调用lambda函数对象
+binops["%"](10, 5); // 调用lambda函数对象
+```
+[代码实现](./std_func_object/src/map_std_function.cpp)
+我们依次调用了binops中存储的每个操作。
 
 
 

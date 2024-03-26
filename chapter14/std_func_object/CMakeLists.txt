@@ -23,12 +23,14 @@ endif()
 
 add_executable(std_func_obj src/std_func_obj.cpp)
 add_executable(tmp_func_obj src/tmp_func_obj.cpp)
+add_executable(binops src/map_std_function.cpp)
 
 target_compile_features(std_func_obj PUBLIC cxx_auto_type)
 target_compile_features(tmp_func_obj PUBLIC cxx_auto_type)
+target_compile_features(binops PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS std_func_obj tmp_func_obj
+install(TARGETS std_func_obj tmp_func_obj binops
 	RUNTIME DESTINATION usr/bin)
 
