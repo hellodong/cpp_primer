@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-class SmallInt{
+
+class SmallInt
+{
     public:
         SmallInt(int val = 0):value(val) {}
         operator int () const {return value;}

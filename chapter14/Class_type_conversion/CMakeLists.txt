@@ -23,11 +23,16 @@ endif()
 
 add_executable(smallint src/small_int.cpp)
 
+add_executable(userdefine src/user_define.cpp)
+
+add_executable(smallint_overlaod_operator src/smallint_overload_operator.cpp)
+
 target_compile_features(smallint PUBLIC cxx_auto_type)
+target_compile_features(userdefine PUBLIC cxx_auto_type)
 #target_compile_features(hasPtr_ptr PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS smallint
+install(TARGETS smallint userdefine smallint_overlaod_operator 
 	RUNTIME DESTINATION usr/bin)
 
