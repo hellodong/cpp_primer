@@ -24,3 +24,21 @@ class Bulk_quote: public Quote{
 ```
 因为Bulk_quote在它的派生列表中使用了public关键字，我们完全可以把Bulk_quote的对象当成Quote的对象来使用。<br>
 派生类必须在其内部对所有重新定义的虚函数进行声明。派生类可以在这样的函数之前加virtual关键字，但并不是非得这么做。C++11新标准允许派生类显式注明他将使用哪个成员函数改写基类的虚函数，具体措施是在该函数的形参列表之后增加一个override关键字。
+
+##### 动态绑定 
+通过使用**动态绑定(dynamic binding)**, 我们能用同一段代码分别处理Quate和Bulk_quote对象。举个例子:
+
+```c++
+double print_total(ostream &os, const Quate &item, size_t n)
+{
+    double ret = item.net_price(n);
+    return ret;
+}
+
+print_total(std::cout, basic, 20);
+print_total(std::cout, bulk, 20);
+```
+第一个函数调用将Quate对象传入print_total, 因此执行的是Quate的版本。第二个函数调用，实参是Bulk_quote，因此执行的是Bulk_quote版本。在上述过程中函数的运行版本由实参决定，在运行时选择函数的版本，所以动态绑定有时又被称为**运行时绑定**
+
+#### 定义基类
+
