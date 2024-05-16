@@ -40,5 +40,32 @@ print_total(std::cout, bulk, 20);
 ```
 第一个函数调用将Quate对象传入print_total, 因此执行的是Quate的版本。第二个函数调用，实参是Bulk_quote，因此执行的是Bulk_quote版本。在上述过程中函数的运行版本由实参决定，在运行时选择函数的版本，所以动态绑定有时又被称为**运行时绑定**
 
+### 定义基类和派生类
 #### 定义基类
+完成Quate类的定义:
+```C++
+class Quate{
+    public:
+        Quate() = default;
+        Quate(std::string &_isbn, double _price = 0.0):price_(_price), isbn_(_isbn) {}
+        std::string isbn(void) const {return isbn_;}
+        virtual double net_price(std::size_t n) const
+        {
+            return price_ * n;
+        }
+
+        virtual ~Quate() = default; //对析构函数进行动态绑定
+
+    protected:
+        double price_;
+
+    private:
+        std::string isbn_;
+};
+
+```
+作为继承关系中根节点的类通常会定义一个虚析构函数。
+
+##### 成员函数与继承
+
 
