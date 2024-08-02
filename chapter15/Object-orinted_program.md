@@ -130,15 +130,80 @@ class Bulk_Quate:public Quate
     public:
        Bulk_Quate() = default;
        Bulk_Quate(std::string &_isbn, double _price = 0.0, double _discount = 1):Quate(_isbn,_price), discount_(_discount) {}
-       double net_price(std::size_t n) const override
-       {
-            return price_ * n * discount_;
-       }
+      
     private:
         double discount_;
 };
 ```
-**Bulk_Quate** 函数将前两个参数传递给Quate的构造函数，由Quate的构造函数负责初始化Bulk_Quate的基类部分。当Quate构造函数结束后，我们构建的对象基类部分也就完成初始化了。接下来初始化由派生类直接定义的discount成员。最后运行Bulk_Quate构造函数体。
+**Bulk_Quate** 函数将前两个参数传递给Quate的构造函数，由Quate的构造函数负责初始化Bulk_Quate的基类部分。当Quate构造函数结束后，我们构建的对象基类部分也就完成初始化了。接下来初始化由派生类直接定义的discount成员。最后运行Bulk_Quate构造函数体。<br>
+除非我们特别指出，否则派生类对象的基类部分会像数据成员一样执行默认初始化。如果想使用其他的基类构造函数，我们需要以类名加圆括号内的实参列表形式为构造函数提供初始值。这些实参将帮助编译器决定到底应该选用哪个构造函数来初始化派生类对象的基类部分。
+
+##### 派生类使用基类的成员
+派生类可以访问基类的公有成员和受保护成员:
+```C++
+ double net_price(std::size_t n) const override
+{
+            return price_ * n * discount_;
+}
+```
+ - 派生类对象不能直接初始化基类的成员
+
+ ##### 继承与静态成员
+ 如果基类定义了一个静态成员，则整个继承体系中只存在该成员的唯一定义。
+ ```C++
+ class Base{
+    public:
+        static void statmem();
+ };
+ class Derived : public Base {
+    void f(const Derived&);
+ };
+ ```
+ 静态成员遵循通用访问控制规则，基类中成员是private的，则派生类无权访问。静态成员可访问的，我们既能通过基类使用也能通过派生类使用它:
+ ```C++
+ void Derived::f(const Derived &derived_obj)
+ {
+    Base::statmem();        //正确，base定义了statmem()
+    Derived::statmem();     //正确，Derived定义了statmem()
+    derived_obj.statmem();  //通过Derived对象访问
+    statmem();              //通过this对象访问
+ }
+ ```
+ ##### 派生类的声明
+ 派生类的声明与其他类差别不大，声明中包含类名但是不包含它的派生类列表:
+ ```C++
+ class Bulk_quote:public Quote;  //错误，派生类列表不能出现在这里
+ class Bulk_quote;               //正确，声明派生类的正确方式
+ ```
+
+ ##### 被用作基类的类
+ 我们想将某个类用作基类，则该类必须已经定义而非仅仅声明:
+ ```C++
+ class Quate;       //声明但未定义
+ class Bulk_quote:public Quote {};  //错误: Quote必须被定义
+ ```
+ 这个规定还有一层隐含的意思，一个类不能派生它本身。<br>
+ 一个类是基类，同时它也可以是一个派生类：
+ ```C++
+ class Base{};
+ class D1:public Base {};
+ class D2:public D1{};
+ ```
+ Base是D1的**直接基类(direct base)**, 是D2的**间接基类(indirect base)**。最终的派生类将包含它的直接基类的子对象以及每个间接基类的子对象。
+
+ ##### 防止继承的发生
+
+ 有时我们会定义这样一种类，我们不希望其他类继承它。C++11新标准定义了一种防止继承发生的方法，在名后跟一个关键字final:
+ ```C++
+ class NoDerived final{};
+ class Base {};
+ class Last final: Base{};  //last不能作为基类
+ class Bad: NoDerived {};   //错误，NoDerived是final的
+ class Bad2: Last {};       //错误，Last是final的
+ ```
+ #### 类型转换与继承
+
+
 
 
 
