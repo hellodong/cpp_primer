@@ -21,9 +21,13 @@ endif()
 
 endif()
 
-add_executable(quate src/quate.cpp)
+add_executable(quate src/quate_virtual.cpp)
+add_executable(bulkquate src/bulkquate_quate.cpp)
+add_executable(quate_dft_para src/bulkquate_quate_dft_para.cpp)
 
 target_compile_features(quate PUBLIC cxx_auto_type)
+target_compile_features(bulkquate PUBLIC cxx_auto_type)
+target_compile_features(quate_dft_para PUBLIC cxx_auto_type)
 #target_compile_features(hasPtr_ptr PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
