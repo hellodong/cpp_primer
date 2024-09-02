@@ -324,3 +324,83 @@ class Bulk_quote : public Disc_quote {
 };
 ```
 这个版本的Bulk_quote的直接基类是Disc_quote, 间接基类是Quote。每个Bulk_quote对象包含三个子对象:一个(空的)Bulk_quote部分、一个Disc_quote子对象和一个Quote子对象。<br>
+
+### 访问控制与继承
+每个类分别控制其成员对于派生类来说是否**可访问(accessible)**。
+##### 受保护的成员
+一个类使用protected关键字来声明那些它希望与派生类分享但不想被其他公共访问使用的成员：
+- 和私有成员类似，受保护的成员对于类的用户来说是不可访问的
+- 和公有成员类似，受保护的成员对于派生类和友元来说是可访问的
+- 派生类成员或友元只能通过派生类对象访问基类受保护成员。派生类对于一个基类对象受保护成员没有任何访问特权。
+
+理解最后一条，如下例子：
+```C++
+class Base {
+    protected:
+        int prot_element;       // protected成员
+};
+
+class Sneaky:public Base {
+    friend void clobber(Sneaky &);      //能访问Sneaky::prot_element
+    friend void clobber(Base &);        //不能访问Base::prot_mem
+    int j;                              //j默认是private
+};
+
+// 正确：clobber能访问Sneaky对象的private和protected成员
+void clobber(Sneaky &s) {s.j = s.prot_mem = 0;}
+// 错误：clobber不能访问Base的protected成员
+void clobber(Base &b) {b.prot_mem = 0;}
+```
+
+##### 公有、私有和受保护继承
+某个类对其继承而来的成员访问权限受两个因素影响：一是在基类中该成员访问说明符，二是在派生类的派生列表的访问说明符。考虑如下继承关系:
+```C++
+class Base{
+    public:
+        void base_pub_mem();     //public 成员
+    protected:
+        int base_prot_mem;       //protected 成员
+    private:
+        char base_priv_mem;      //private 成员
+};
+
+struct Pub_Derv:public Base{
+    //正确：派生类能访问protected成员
+    int f() {return base_prot_mem;}
+    //错误:private成员对于派生类来说是不可访问的
+    char g() {return base_priv_mem;};
+};
+
+struct Pirv_Dev: private Base{
+    //private不影响派生类的访问权限
+    int f1() const {return base_prot_mem;}
+};
+```
+派生类访问说明符对于派生类的成员(及友元)能否访问其直接基类的成员没什么影响。对基类成员的访问权限只与基类中的访问说明符有关。Pub_Derv和Priv_Derv都能访问受保护的成员prot_mem,同时它们都不能访问私有成员priv_mem。<br>
+派生类访问说明符的目的是控制派生类用户（包括派生类的派生类在内）对于基类成员访问权限：
+```C++
+Pub_Derv d1;            //继承自Base的成员是public的
+Priv_Derv d2;           //继承自Base的成员是private的
+d1.base_pub_mem();      //正确:base_pub_mem在派生类中是public的
+d2.base_pub_mem();      //错误:base_pub_mem在派生类中是private的
+```
+Pub_Derv和Priv_Derv都继承了base_pub_mem函数。如果继承是public的，则成员将遵循其原有访问说明符，此时d1可以调用base_pub_mem函数。在Priv_Derv中，base的成员是private，因此类用户不能调用base_pub_mem。<br>
+派生类访问说明符还可以控制继承自派生类的新类访问权限：
+```C++
+struct Derived_from_public:public Pub_Derv{
+    // 正确： Base::base_prot_mem在Pub_Derv中仍然是protected的
+    int use_base() {return base_prot_mem;}
+};
+struct Derived_from_Private:public Priv_Derv{
+    // 错误：Base::prot_mem在Priv_Derv中是private的
+    int use_base() {return base_prot_mem;}
+};
+```
+Pub_Derv的派生类之所以能访问Base的base_prot_mem成员是因为该成员在Pub_Derv中仍然是受保护的。相反，Priv_Derv的派生类无法执行类的访问，对于它们来说，Priv_Derv继承自Base的所有成员都是私有的。<br>
+假设我们之前还定义了一个名为Prot_Derv的类，它采用protected继承，则Base的所有公有成员在新定义的类中都是受保护的。Prot_Derv的用户不能访问base_pub_mem，但是Prot_Derv的成员和友元可以访问那些继承而来的成员。
+
+##### 派生类向基类转换的可访问性
+派生类向基类的转换是否可访问由使用该转换的代码决定，同时派生类的派生访问说明符也会有影响。假定D继承自B：
+- 只有当D public继承B时，用户代码才能使用派生类向基类的转换；如果D继承B的方式是受保护的或者私有的，则用户代码不能使用该转换
+- 不论D以什么方式继承B，D的成员函数和友元都能使用派生类向基类的转换：派生类向其直接基类的类型转换对于派生类的成员和友元来说永远是可访问的
+- 如果D继承B的方式是公有的或者受保护的，则D的派生类成员和友元可以使用D向B的类型转换；反之，如果D继承B的方式是私有的，则不能使用。
