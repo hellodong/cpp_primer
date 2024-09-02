@@ -289,3 +289,38 @@ final和override说明符出现在形参列表以及尾置返回类型之后。
 double undiscounted = baseP->Quate::net_price(42);
 ```
 该调用在编译时完成。<br>什么时候我们需要回避虚函数默认机制呢？通常是当一个派生类的虚函数调用它覆盖的基类虚函数版本时。
+
+### 抽象基类
+我们定义一个新的名为Disc_quote的类支持不同的折扣策略，其中Disc_quote负责保存购买量的值和折扣值。其他的表示某种特定策略的类(如Bulk_quote)将分别继承自Disc_quote,每个派生类通过定义自己的net_price函数来实现各自的折扣策略。
+##### 纯虚函数
+Disc_quote类表示的是一本打折书籍的通用概念，而非某种具体的折扣策略。<br>我们将net_price定义成**纯虚(pure virtual)函数**从而令程序实现我们的设计意图，这样做可以清晰明了告诉用于当前这个net_price函数是没有实际意义的。和普通虚函数不一样，一个纯虚函数无须定义。我们通过在函数体位置书写=0就可以将一个虚函数说明为纯虚函数。其中，=0只能出现在类内部的虚函数声明语句出:
+```C++
+class Disc_quote: public Quote{
+    public:
+        Disc_quote() = default;
+        Disc_quote(const std::string &book, double price, std::size_t qty, double disc):Quote(book, price), quantity(qty), discount(disc) {}
+        double net_price(std::size_t) const = 0;
+    protected:
+        std::size_t quantity = 0;
+        double discount = 0.0;
+};
+```
+
+##### 含有纯虚函数的类是抽象基类
+含有纯虚函数的类是抽象基类(abstract base class)。抽象基类负责定义接口，而后续的其他类可以覆盖该接口。我们不能(直接)创建一个抽象基类对象。
+```C++
+Disc_quote discounted;      //错误： 不能定义Disc_quote的对象
+Bulk_quote bulk;            //正确： Bulk_quote中没有纯虚函数
+```
+Disc_quote 的派生类必须给出自己的net_price定义，否则他们仍将是抽象基类。
+
+##### 派生类构造函数只初始化它的直接基类
+```C++
+class Bulk_quote : public Disc_quote {
+    public:
+        Bulk_quote() = default;
+        Bulk_quote(const std::string &book, double price, std::size_t qty, double disc):Disc_quote(book, price, qty, disc) {}
+        double net_price(std::size_t) const override;
+};
+```
+这个版本的Bulk_quote的直接基类是Disc_quote, 间接基类是Quote。每个Bulk_quote对象包含三个子对象:一个(空的)Bulk_quote部分、一个Disc_quote子对象和一个Quote子对象。<br>
