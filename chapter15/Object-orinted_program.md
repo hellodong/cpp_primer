@@ -404,3 +404,54 @@ Pub_Derv的派生类之所以能访问Base的base_prot_mem成员是因为该成�
 - 只有当D public继承B时，用户代码才能使用派生类向基类的转换；如果D继承B的方式是受保护的或者私有的，则用户代码不能使用该转换
 - 不论D以什么方式继承B，D的成员函数和友元都能使用派生类向基类的转换：派生类向其直接基类的类型转换对于派生类的成员和友元来说永远是可访问的
 - 如果D继承B的方式是公有的或者受保护的，则D的派生类成员和友元可以使用D向B的类型转换；反之，如果D继承B的方式是私有的，则不能使用。
+
+##### 友元与继承
+友元关系不能传递，友元关系同样也不能继承。基类的友元在访问派生类成员时不具有特殊性，类似。派生类友元也不能随意访问基类成员：
+```C++
+class Base {
+    friend class Pal;   //Pal在访问Base的派生类时不具有特殊性
+};
+
+class Pal{
+    public:
+        int f(base b) {return b.base_prot_mem;}     //正确：Pal是Base的友元
+        int f2(Sneaky s) {return s.j;}              //错误：Pal不是Sneaky的友元
+        int f3(Senaky s) {return s.base_prot_mem;}      //正确： Pal是Base的友元
+};
+```
+如前所述，每个类负责控制自己的成员访问权限，因此尽管看起来有点儿奇怪，但f3确实是正确的。Pal是Base的友元，所以Pal能够访问Base对象的成员，这种可访问性包括了Base对象内嵌在其派生类对象中的情况。<br>
+当一个类将另一个类声明为友元时，这种友元关系只对做出声明的类有效。对于原来那个类来说，其友元基类或派生类不具有特殊访问能力：
+```C++
+calss D2: public Pal {
+    public:
+        int mem(Base b)
+        {
+            return b.base_prot_mem;     //错误： 友元关系不能继承
+        }
+};
+```
+- 不能继承友元关系；每个类负责控制各自成员访问权限。
+
+##### 改变个别成员的可访问性
+有时我们需要改变派生类继承的某个名字的访问级别，通过使用using声明可以达到这一目的：
+```C++
+class Base {
+    public:
+        std::size_t size() const {return n;}
+    protected:
+        std::size_t n;
+};
+
+class Derived: private Base{
+    public:
+        using Base::size;
+    protected:
+        using Base::n;
+};
+```
+因为Derived使用了私有继承，所以继承而来的成员size和n是Derived的私有成员。然而，我们使用using声明语句改变了这些成员的可访问性。改变之后，Derived的用户将可以使用size成员，而Derived的派生类将能使用n。<br>
+通过在类的内部使用using声明语句，我们可以将该类的直接或间接基类中任何可访问成员标记出来。using声明语句中名字的访问权限由该using声明语句之前的访问说明符来决定。也就是说，如果一条using声明语句出现在类的private部分，则该名字只能被类的成员和友元访问；如果using声明语句位于public部分，则类的所有用户都能访问它；如果using声明语句位于protected部分，则该名字对于成员、友元和派生类是可访问的。
+
+##### 默认的继承保护继承
+我们曾介绍使用struct和class关键字定义的类具有不同默认访问说明符。类似，默认派生运算符定义派生类所用关键字来决定。默认情况下，使用class关键字定义的派生类是私有继承的;而使用struct关键字定义的派生类是公有继承的。<br>
+struct和class唯一的差别就是默认成员访问说明符以及默认派生访问说明符；除此之外，再无其他不同之处。
