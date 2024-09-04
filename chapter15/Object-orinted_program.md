@@ -469,3 +469,92 @@ std::cout << bulk.isbn()<< std::endl;
 - 因为Bulk_quote是Disc_quote的派生类，所以Disc_quote中查找，仍然找不到
 - 因为Disc_quote是Quote的派生类，接着找Quote;此时找到isbn，我们使用isbn最终解析为Quote的isbn。
 
+##### 在编译时进行名字查找
+一个对象、引用或指针的静态类型决定了该对象的哪些成员是可见的。即使静态类型与动态类型可能不一致(当使用基类的引用或指针时会发生这种情况)，但是我们能使用哪些成员仍然时由静态类型决定的。举个例子，我们可以给Disc_quote添加一个新成员，该成员返回一个存有最小（或最大）数量及折扣价格的pair：
+```C++
+class Disc_quote:public Quote{
+    public:
+        std::pair<size_t, double> discount_policy() const
+        {
+            return {quantity, discount};
+        }
+};
+```
+我们只能通过Disc_quote及其派生类对象、引用或指针使用discount_policy:
+```C++
+Bulk_quote bulk;
+Bulk_quote *bulkP = &bulk;      //静态类型与动态类型不一致
+Quote *itemP = &bulk;           //静态类型与动态类型不一致
+bulkP->discount_policy();       //正确：bulkP的类型是Bulk_quote*
+itemP->discount_policy();       //错误: itemP的类型是Quote*
+```
+尽管bulk中确实含有一个名为discount_policy的成员，但是该成员对于itemP确是不可见的。itemP的类型是Quote的指针，意味着对discount_policy的搜索将从Quote开始。显然Quote不包含名为discount_policy的成员，所以我们无法通过Quote的对象、引用或指针调用discount_policy。
+
+##### 名字冲突与继承
+派生类也能重用定义在其直接基类或间接基类中的名字，此时定义在内层作用域(派生类)名字将隐藏定义在外层作用域(基类)名字:
+```C++
+struct Base {
+    Base(): mem(0) {}
+    protected:
+        int mem;
+};
+
+struct Derived: Base{
+    Derived(int i):mem(i) {}        // 用i初始化Derived::mem, Base::mem 进行默认初始化
+    int get_mem() {return mem;}     // 返回Derived::mem
+    protected:
+        int mem;                    //隐藏基类中的mem
+};
+```
+get_mem中mem引用解析结果是定义在Derived中的名字。
+
+- 派生类成员将隐藏同名基类成员
+
+我们可以通过作用域运算符来使用一个被隐藏的基类成员:
+```C++
+struct Derived:Base{
+    int get_base_mem() {return Base::mem;}
+};
+```
+作用域运算符将覆盖掉原有的查找规则，并指示编译器从Base类作用域开始查找mem。
+
+##### 名字查找先于类型检查
+声明在内层作用域的函数并不会重载声明在外层作用域的函数。因此，定义派生类函数也不会重载其基类中的成员。和其他作用域一样，如果派生类的成员与基类某个成员同名，则派生类将在其作用域内隐藏该基类成员。即使派生类成员和基类成员形参列表不一致，基类成员也仍然会被隐藏掉:
+```C++
+struct Base {
+    int memfcn();
+};
+struct Derived:Base 
+{
+    int memfcn(int);
+};
+Derived d; Base b;
+b.memfcn();                 //调用Base::memfcn
+d.memfcn(10);               //调用Derived::memfcn
+d.memfcn();                 //错误: 参数列表为空的memfcn被隐藏了
+d.Base::memfcn();           //正确：调用Base::memfcn
+```
+
+##### 虚函数与作用域
+我们现在可以理解为什么基类与派生类中的虚函数必须有相同形参列表了。假如基类与派生类的虚函数接受的实参不同，则我们就无法通过基类的引用或指针调用派生类虚函数了：
+```C++
+class Base{
+    public:
+        virtual int fcn();
+};
+class D1:public Base{
+    public:
+        int fcn(int);           // 形参列表与Base中的fcn不一致
+        virtual void f2();      // 是一个新的虚函数，在Base中不存在
+};
+class D2:public D1{
+    public:
+        int fcn(int);   //是一个非虚函数，隐藏了D1::fcn(int)
+        int fcn();      //覆盖了Base的虚函数fcn
+        void f2();      //覆盖了D1的虚函数f2
+};
+```
+##### 覆盖重载函数
+成员函数无论是否是虚函数都能被重载。派生类可以覆盖重载函数的0个或多个实例。如果派生类希望所有重载版本对于它来说都是可见的，那么它就要覆盖所有版本，或者一个也不覆盖。<br>
+为重载的成员提供一条using声明语句，这样我们就无须覆盖基类中每一个重载版本了。using声明语句指定一个名字而不指定形参列表，所以一条基类成员函数的using声明语句就可以把该函数的所有重载实例添加到派生类作用域中。此时，派生类只需要定义其特有函数就可以了，无须为继承而来的其他函数重新定义。
+

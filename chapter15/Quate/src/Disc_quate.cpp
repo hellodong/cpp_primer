@@ -26,6 +26,7 @@ class Disc_Quate:public Quate
         Disc_Quate() = default;
         Disc_Quate(std::string &book, double price, std::size_t qty, double disc):Quate(book, price), quantity(qty), discount(disc) { }
         double net_price(std::size_t) const = 0;
+        std::pair<std::size_t, double> discount_policy(void) { return {quantity, discount};}
     protected:
         std::size_t quantity;
         double discount;
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
 
     std::cout << "ISBN: "<< quate_.isbn() << ", sale: " << 2<< ", total due:" <<quate_.net_price(2) << std::endl;
     std::cout << "ISBN: "<< buld_quate_.isbn() << ", sale: " << 2<< ", total due:" <<buld_quate_.net_price(2) << std::endl;
-
+    std::cout <<"Discount policy: " << buld_quate_.discount_policy().first <<", " << buld_quate_.discount_policy().second << std::endl;
 
     return 0;
 }
