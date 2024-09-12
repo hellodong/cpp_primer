@@ -25,12 +25,13 @@ add_executable(quate src/quate_virtual.cpp)
 add_executable(bulkquate src/bulkquate_quate.cpp)
 add_executable(quate_dft_para src/bulkquate_quate_dft_para.cpp)
 add_executable(disc_quate src/Disc_quate.cpp)
+add_executable(bulkquate_derived_disc src/bulkquate_derived_disc.cpp)
 
 target_compile_features(quate PUBLIC cxx_auto_type)
 target_compile_features(bulkquate PUBLIC cxx_auto_type)
 target_compile_features(quate_dft_para PUBLIC cxx_auto_type)
 target_compile_features(disc_quate PUBLIC cxx_auto_type)
-#target_compile_features(hasPtr_ptr PUBLIC cxx_auto_type)
+target_compile_features(bulkquate_derived_disc PUBLIC cxx_auto_type)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
