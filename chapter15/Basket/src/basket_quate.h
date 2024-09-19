@@ -15,6 +15,8 @@ class Quate{
         {
             return price_ * n;
         }
+        virtual Quate *clone() const & { return new Quate(*this);}
+        virtual Quate *clone() const && {return new Quate(std::move(*this));}
 
     protected:
         double price_;
@@ -30,6 +32,9 @@ class Disc_Quate:public Quate
         Disc_Quate(std::string &book, double price, std::size_t qty, double disc):Quate(book, price), quantity(qty), discount(disc) { }
         double net_price(std::size_t) const = 0;
         std::pair<std::size_t, double> discount_policy(void) { return {quantity, discount};}
+
+        Disc_Quate *clone() const & = 0;
+        Disc_Quate *clone() const && = 0;
     protected:
         std::size_t quantity;
         double discount;
@@ -43,6 +48,8 @@ class Bulk_Quate:public Disc_Quate
         {
             return price_ * n * discount;
         }
+        Bulk_Quate * clone() const & {return new Bulk_Quate(*this);}
+        Bulk_Quate * clone() const && {return new Bulk_Quate(std::move(*this));}
 };
 
 class Basket
@@ -51,6 +58,15 @@ class Basket
         void add_item(const std::shared_ptr<Quate> &sale)
         {
             items.insert(sale);
+        }
+        void add_item(const Quate &sale)
+        {
+            items.insert(std::shared_ptr<Quate>(sale.clone()));
+        }
+
+        void add_item(Quate &&sale)
+        {
+            items.insert(std::shared_ptr<Quate>(std::move(sale).clone()));
         }
         double total_receipt(std::ostream &) const;
     private:
