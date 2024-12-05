@@ -200,4 +200,28 @@ void Blob<T>::check(size_type i, const std::string &msg) const
     }
 }
 ```
+下标运算符和back函数用模板参数指出返回类型，其他未变：
+```C++
+template <typename T>
+T& Blob<T>::back()
+{
+    check (0, "back on empty Blob");
+    return data->back();
+}
+template <typename T>
+T& Blob<T>::operator[](size_type i)
+{
+    check (i, "subscript out of range");
+    return (*data)[i];
+}
+```
+在原StrBlob类中，这些运算符返回string&。而模板版本则返回一个引用，指向用来实例化Blob的类型。<br>
+pop_back函数与原StrBlob的成员几乎相同：
+```C++
+template <typename T> void Blob<T>::pop_back()
+{
+    check (0,"pop_back on empty Blob");
+    data->pop_back();
+}
+```
 
