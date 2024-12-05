@@ -120,3 +120,84 @@ template <typename T> inline T min (const T&, const T&);
 **类模板**(class template)是用来生成类的蓝图的。与函数模板的不同之处是，编译器不能为类模板推断模板参数类型。为了使用类模板，我们必须在模板名后的尖括号中提供额外信息--用来代替模板参数的模板实参列表。
 
 ##### 定义类模板
+我们将实现StrBlob的模板版本。我们将此模板定义为Blob，意指它不再针对string.类似StrBlob，我们的模板会提供对元素的共享访问能力。与类不同，我们的模板可以用于更多类型的元素。<br>
+类似函数模板，类模板以关键字template开始，后跟模板参数列表。在类模板的定义中，我们将模板参数当作替身，代替使用模板时用户需要提供类型或值:
+```C++
+template<typename T>
+class Blob{
+    public:
+        typedef T value_type;
+        typedef typename std::vector<T>::size_type size_type;
+        Blob();
+        Blob(std::initializer_list<T> il);
+        size_type size() const {return data->size();}
+        bool empty() const {return data->empty();}
+        void push_back(const T tt){data->push_back(t);}
+        void push_back(T &&t) {data->push_back(std::move(t));}
+        void pop_back();
+        T& back();
+        T& operator[] (size_type i);
+    private:
+        std::shared_ptr<std::vector<T>> data;
+        void check(size_type i, const std::string &msg) const;
+};
+```
+我们的Blob模板有一个名为T的模板类型参数，用来表示Blob保存的元素类型。
+
+##### 实例化模板
+我们已经多次见到，当使用类模板时，我们必须提供额外信息。我们现在直到这些额外信息是**显式模板实参(explicit template argument)**列表，他们被绑定到模板参数。编译器使用这些模板实参来实例化出特定的类。
+```C++
+Blob<int> ia;
+Blob<int> ia2={1,2,3,4};
+```
+从上面两个定义，编译器会实例化出一个与下面定义等价的类:
+```C++
+class Blob<int> 
+{
+public:
+    typedef typename std::vector<int>size_type size_type;
+    Blob();
+    Blob(std::initializer_list<int> il);
+    //...
+    int &operator[](size_type i);
+private:
+    std::shared_ptr<std::vector<int>> data;
+    void check(size_type i, const std::string &msg) const;
+};
+```
+编译器从我们的Blob模板实例化出一个类时，它会重写Blob模板，将模板参数T的每个实例替换为给定的模板实参。对我们指定的每一种元素类型，编译器都生成一个不同的类:
+```C++
+//下面的定义实例化出两个不同的Blob类型
+Blob<string> names;
+Blob<double> prices;
+```
+这两个定义会实例化出两个不同的类。
+
+- 一个类模板的每个实例都形成一个独立的类。类型Blob<std::string>与任何其他Blob类型都没有关联，也不会对任何其他Blob类型的成员有特殊访问权限。
+
+##### 类模板成员函数
+与其他任何类相同，我们既可以在类模板内部，也可以在类模板外部为其定义成员函数，且定义在类模板内的成员函数被隐式声明为内敛函数。<br>
+类模板的成员函数本身是一个普通函数。但是类模板的每个实例都有其自己版本的成员函数。因此，类模板的成员函数具有和模板相同的模板参数。因而，定义在类模板之外的成员就必须以关键字template开始，后接类模板参数列表。<br>
+与往常一样，当我们在类外定义成员时，必须说明成员属于哪个类。而且，从一个模板生成的类的名字中必须包含其模板实参。当我们定义一个成员函数时，必须说明成员属于哪个类。而且，从一个模板生成的类的名字中必须包含模板实参。当我们定义一个成员函数时，模板实参与模板形参相同。即，对于StrBlob的 一个给定的成员函数
+```C++
+ret-type StrBlob::member-name(parameter-list)
+```
+对应Blob的成员应该是这样:
+```C++
+template <typename T>
+ret-type Blob<T>::member-name(parameter-list)
+```
+
+##### check和元素访问成员
+定义check成员:
+```C++
+template<typename T>
+void Blob<T>::check(size_type i, const std::string &msg) const
+{
+    if (i >= data->size())
+    {
+        throw std::out_of_range(msg);
+    }
+}
+```
+
