@@ -225,3 +225,86 @@ template <typename T> void Blob<T>::pop_back()
 }
 ```
 
+##### Blob构造函数
+与其他任何定义在类模板外的成员一样，构造函数定义要以模板参数开始:
+```C++
+template <typename T>
+Blob<T>::Blob(): data(std::make_shared<std::vector<T>>) {}
+```
+这段代码在作用域Blob<T>中定义了名为Blob的成员函数。类似StrBlob默认构造函数(12.1.1节)， 此构造函数分配一个空vector,并将指向vector的指针保存在data中。类似，接受一个initializer_list参数的构造函数将其类型参数T作为initializer_list参数的元素类型:
+```C++
+template <typename T>
+Blob<T>::Blob(std::initializer_list<T> il):data(std::make_shared<std::vector<T>>(il)) {}
+```
+在本样例中，我们用参数il来初始化此vector。为了使用该构造函数，我们必须传递给它一个initializer_list，其中元素必须与Blob的元素类型兼容：
+```C++
+Blob<std::string> articles = {"a", "an","the"};
+```
+这条语句中，构造函数的参数类型为initializer_list<string>。列表中的每个字符串常量隐式的转为一个string。
+
+##### 类模板成员函数实例化
+默认情况下，一个类模板成员函数只有当程序用到它时才进行实例化。例如:
+```C++
+// 实例化Blob<int>和接受initializer_list<int>的构造函数
+Blob<int> squares = {0,1,2,3,4,5,6,7,8,9};
+// 实例化Blob<int>::size() const
+for (size_t i = 0;i != squares.size();i++)
+{
+    squares[i] = i*i; // 实例化Blob<int>::operator[](size_t)
+}
+```
+实例化了Blob<int>类和它的三个成员函数：operator[]、size和接受initializer_list<int>的构造函数。<br>
+如果一个成员函数没有被使用，则它不会被实例化。成员函数只有在被用到时才进行实例化，这一特性使得即使某种类型不能完全符合模板操作的要求，我们仍然能用到该类型实例化类。
+- 默认情况下，对于一个实例化了的类模板，其成员只有在使用时才被实例化。
+
+##### 在类代码内简化模板类名的使用
+当我们使用一个类模板类型时必须提供模板实参，但这一规则有一个例外。在类模板自己作用域中，我们可以直接使用模板名而不提供实参:
+```C++
+// 若试图访问一个不存在的元素，BlobPtr抛出一个异常
+template <typename T> class BlobPtr{
+    public:
+        BlobPtr():curr(0) {}
+        BlobPtr(Blob<T> &a, size_t sz = 0):wptr(a.data), curr(sz) {}
+        T& operator *() const 
+        {
+            auto p = check (curr, "deference past end");
+            return (*p)[curr];// (*p)为本对象指向的vector
+        }
+        //递增和递减
+        BlobPtr& operator++();// 前置运算符
+        BlobPtr& operator--();
+    private:
+        //若检查成功，check返回一个指向vector的shared_ptr
+        std::shared_ptr<std::vector<T>> check(std::size_t, const std::string &) const;
+        // 保存一个weak_ptr，表示底层vector可能被销毁
+        std::weak_ptr<std::vector<T>> wptr;
+        std::size_t curr; //数组中当前位置
+};
+```
+BlobPtr的前置递增和递减成员返回BlobPtr&,而不是BlobPtr<T>&。当我们处于一个类模板作用域中时，编译器处理模板自身引用时就好像我们已经提供了与模板参数匹配的实参一样。
+```C++
+BlobPtr<T>& operator++();
+BlobPtr<T>& operator--();
+```
+
+##### 在类模板外使用类模板名
+当我们在类模板外定义成员时，必须记住，我们并不在类的作用域中，直到遇到类名才表示进入类的作用域
+```C++
+template <typename T>
+BlobPtr<T> BlobPtr<T>::operator++(int)
+{
+    // 此处无须检查；调用当前递增时会进行检查
+    BlobPtr ret = *this;
+    ++*this;
+    return ret;   
+}
+```
+由于返回类型位于类作用域外，我们必须指出返回类型是一个实例化BlobPtr,它所使用类型与类实例化所用类型一致。在函数体内，我们已经进入类作用域，因此在定义ret时无须重复模板实参。如果不提供模板实参，则编译器将假定我们使用类型与成员实例化所用类型一致。因此，ret的定义与如下代码等价:
+```C++
+BlobPtr<T> ret = *this;
+```
+- 在一个类模板的作用域内，我们可以直接使用模板名而不必指定模板实参。
+
+##### 类模板和友元
+当一个类包含一个友元声明时，类与友元各自是否是模板是相互无关的。如果一个类模板包含一个非模板友元，则友元被授权可以访问所有模板实例。如果友元自身是模板，类可以授权给所有友元模板实例，也可以只授权给特定实例。<br>
+类模板与另一个(类或函数)模板间友好关系的最常见形式是建立对应实例及其友元间的友好关系。例如Blob类应该将BlobPtr类
