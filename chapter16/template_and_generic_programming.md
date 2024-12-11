@@ -307,4 +307,56 @@ BlobPtr<T> ret = *this;
 
 ##### 类模板和友元
 当一个类包含一个友元声明时，类与友元各自是否是模板是相互无关的。如果一个类模板包含一个非模板友元，则友元被授权可以访问所有模板实例。如果友元自身是模板，类可以授权给所有友元模板实例，也可以只授权给特定实例。<br>
-类模板与另一个(类或函数)模板间友好关系的最常见形式是建立对应实例及其友元间的友好关系。例如Blob类应该将BlobPtr类
+类模板与另一个(类或函数)模板间友好关系的最常见形式是建立对应实例及其友元间的友好关系。例如,Blob类应该将BlobPtr类和一个模板版本的Blob相等运算符定义为友元。<br>
+为了引用(类或函数)模板的一个特定实例，我们必须首先声明模板自身。一个模板声明包括模板参数列表:
+```C++
+// 前置声明，在Blob中声明友元所需要的
+template <typename> class BlobPtr;
+template <typename> class Blob;
+template <typename T> bool operator ==(const Blob<T>&, const Blob<T>&);
+template <typename T> 
+class Blob{
+    //每个Blob实例将访问权限授予用相同类型实例化的BlobPtr和相等运算符
+    friend class BlobPtr<T>;
+    friend bool operator==<T>(const Blob<T>&, const Blob<T>&);
+};
+```
+友元的声明用Blob的模板形参作为他们自己的模板实参。因此，友好关系被限定在用相同类型实例化的Blob与BlobPtr相等运算符之间：
+```C++
+Blob<char> ca; //BlobPtr<char>和operator==<char>都是本对象的友元
+Blob<int> ia; //BlobPtr<int>和operator==<int>都是本对象的友元
+```
+BlobPtr<char>的成员可以访问ca(或任何其他Blob<char>对象)的非public部分，但ca对ia的Blob任何其他实例都没有特殊访问权限。<br>
+<br>
+
+一个类也可以将另外一个模板的每个实例都声明为自己的友元，或者限定特定的实例为友元:
+```C++
+//前置声明，在将模板的一个特定实例声明为友元时要用到
+template <typename T> class Pal;
+
+class C { //C 是一个普通的非模板类
+    friend class Pal<C>;   //用类C实例化的Pal是C的一个友元
+    // Pal2的所有实例都是C的友元；这种情况无须前置声明
+    template <typename T> friend class Pal2;
+};
+template <typename T>class C2 {  //C2本身是一个类模板
+    // C2的每个实例将相同实例化的Pal声明为友元
+    friend class Pal<T>; //Pal的模板声明必须在作用域之外
+    // Pal2的所有实例都是C2的每个实例的友元，不需要前置声明
+    template <typename X> friend class Pal2;
+    // Pal3是一个非模板类，它是C2所有实例的友元
+    friend class Pal3;  // 不需要Pal3的前置声明
+};
+```
+为了让所有实例成为友元，友元声明中必须使用与类模板本身不同的模板参数。
+
+##### 令模板自己的类型参数成为友元
+在C++11标准中，我们可以将模板类型参数声明为友元:
+```C++
+template <typename Type> class Bar{
+    friend Type;
+};
+```
+此处我们将用来实例化Bar的类型声明为友元。因此，对于某个类型名为Foo,Foo将成为Bar<Foo>的友元，Sales_data将成为Bar<Sales_data>的友元，依次类推。<br>
+虽然友元通常来说应该是一个类或是一个函数，但我们完全可以用一个内置类型来实例化Bar。这种与内置类型的友好关系是允许的，以便我们能用内置类型来实例化Bar这样的类。
+
