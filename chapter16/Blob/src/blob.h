@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 
 template <typename> class BlobPtr;
 template <typename> class Blob;
@@ -21,7 +22,7 @@ class Blob{
         Blob(std::initializer_list<T> il);
         size_type size() const {return data->size();}
         bool empty() const {return data->empty();}
-        void push_back(const T tt){data->push_back(t);}
+        void push_back(const T t){data->push_back(t);}
         void push_back(T &&t) {data->push_back(std::move(t));}
         void pop_back();
         T& back();
@@ -33,7 +34,7 @@ class Blob{
 };
 
 template <typename T>
-Blob<T>::Blob():data(std::make_shared<std::vector<T>>) {}
+Blob<T>::Blob():data(std::make_shared<std::vector<T>>()) {}
 
 template <typename T>
 Blob<T>::Blob(std::initializer_list<T> il):data(std::make_shared<std::vector<T>>(il)) {}
@@ -66,7 +67,7 @@ class BlobPtr {
 };
 
 template<typename T>
-BlobPtr<T>& BlobPtr<T>::operator++(int)
+BlobPtr<T>& BlobPtr<T>::operator++()
 {
     BlobPtr ret = *this;
     ++*this;
@@ -74,11 +75,31 @@ BlobPtr<T>& BlobPtr<T>::operator++(int)
 }
 
 template<typename T>
-BlobPtr<T>& BlobPtr<T>::operator--(int)
+BlobPtr<T>& BlobPtr<T>::operator--()
 {
     BlobPtr ret = *this;
     --*this;
     return ret;
+}
+
+template<typename T>
+std::shared_ptr<std::vector<T>> BlobPtr<T>::check(std::size_t sz, const std::string &msg) const 
+{
+    auto sptr = wptr.lock();
+    if (nullptr != sptr)
+    {
+        if (sz >=sptr->size())
+        {
+            throw std::out_of_range(msg);
+        }
+    }
+    return sptr;
+}
+
+template <typename T>
+bool operator==(const Blob<T> &lhs, const Blob<T> &rhs)
+{
+    return lhs == rhs;
 }
 
 #endif //blob.h

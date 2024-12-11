@@ -291,7 +291,7 @@ BlobPtr<T>& operator--();
 当我们在类模板外定义成员时，必须记住，我们并不在类的作用域中，直到遇到类名才表示进入类的作用域
 ```C++
 template <typename T>
-BlobPtr<T> BlobPtr<T>::operator++(int)
+BlobPtr<T> BlobPtr<T>::operator++()
 {
     // 此处无须检查；调用当前递增时会进行检查
     BlobPtr ret = *this;
