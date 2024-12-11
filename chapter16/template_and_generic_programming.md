@@ -360,3 +360,57 @@ template <typename Type> class Bar{
 此处我们将用来实例化Bar的类型声明为友元。因此，对于某个类型名为Foo,Foo将成为Bar<Foo>的友元，Sales_data将成为Bar<Sales_data>的友元，依次类推。<br>
 虽然友元通常来说应该是一个类或是一个函数，但我们完全可以用一个内置类型来实例化Bar。这种与内置类型的友好关系是允许的，以便我们能用内置类型来实例化Bar这样的类。
 
+##### 模板类型别名
+类模板的一个实例定义了一个类类型，与任何其他类类型一样，我们可以定义一个typedef来引用实例化的类:
+```C++
+typedef Blob<std::string> StrBlob;
+```
+这条typedef语句允许我们运行在12.1.1节中编写的代码，而使用的却是用std::string实例化的模板版本Blob。由于模板不是一个类型，我们不能定义一个typedef引用一个模板。即，无法定义一个typedef引用Blob<T>。<br>
+但是, C++11标准允许我们为类模板定义一个类型别名:
+```C++
+template <typename T> using twin = pair<T,T>;
+twin<std::string> authors; // authors是一个pair<string, string>
+twin<int> win_loss;        // win_loss是一个pair<int, int>
+twin<double> area;         // area 是一个pari<double, double>
+```
+在这段代码中，我们将twin定义为成员类型相同的pair的别名。这样,twin的用户只需指定一次类型。<br>
+当我们定义一个模板类型别名时，可以固定一个或多个模板参数：
+```C++
+template <typename T> using PartNo = pair<T, unsigned>;
+PartNo<std::string> books;   // books是一个pair<std::string, unsigned>
+PartNo<Vehicle> cars;        // cars是一个pair<Vehicle, unsigned>
+PartNo<Student> kids;        // kids是一个pair<Student, unsigned>
+```
+这段代码中我们将PartNo定义为一族类型别名，这族类型是second成员为unsigned的pair。PartNo的用户需要指出pair的first成员类型，但不能指定second成员类型。
+
+##### 类模板的static成员
+与任何其他类相同，类模板可以声明为static成员:
+```C++
+template <typename T> class Foo{
+    public:
+        static std::size_t count() {return ctr;}
+    private:
+        static std::size_t ctr;
+};
+```
+Foo是一个类模板，它有一个名为count的public static成员函数和一个名为ctr的private static数据成员。每个Foo的实例都有其自己的static成员实例。即，对任意给定类型X，都有一个Foo<X>::ctr和一个Foo<X>::count成员。所有Foo<X>类型的对象共享相同的ctr对象和count函数。例如：
+```C++
+//实例化static成员Foo<std::string>::ctr和Foo<std::string>::count
+Foo<std::string> fs;
+//所有三个对象共享相同的 Foo<int>::ctr和Foo<int>::count成员
+Foo<int> f1, fi2, fi3;
+```
+模板类的每个static数据成员必须且仅有一个定义。但是，类模板的每个实例都有一个独有的static对象。因此，与定义模板的成员函数类似，我们将static数据成员也定义为模板:
+```C++
+template <typename T>
+size_t Foo<T>::ctr = 0; //定义并初始化ctr
+```
+与类模板的其他成员类似，定义开始部分是模板参数列表，随后是我们定义的成员类型和名字。与往常一样，成员名包括成员的类名，对于从模板生成的类来说，类名包括模板实参。因此，当使用一个特定的模板实参类型实例化Foo时，将会为该类型实例化一个独立的ctr,并将其初始化为0。<br>
+与非模板类的静态成员相同，我们可以通过类类型对象访问一个类模板的static成员，也可以使用作用域运算符直接访问成员。当然，为了通过类直接访问static成员，我们必须引用一个特定的实例:
+```C++
+Foo<int> fi;                //实例化Foo<int>类和static数据成员ctr
+auto ct = Foo<int>::count();//实例化Foo<int>::count
+ct = fi.count();            //使用Foo<int>::count
+ct = Foo::count();          //错误: 使用哪个模板实例count?
+```
+类似任何其他成员函数,一个static成员函数只有在使用时才会实例化。
