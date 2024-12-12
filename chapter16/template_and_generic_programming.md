@@ -414,3 +414,108 @@ ct = fi.count();            //使用Foo<int>::count
 ct = Foo::count();          //错误: 使用哪个模板实例count?
 ```
 类似任何其他成员函数,一个static成员函数只有在使用时才会实例化。
+
+#### 模板参数
+类似函数参数名字，一个模板参数名字也没什么内在含义。我们通常将类似参数命名为T，但实际上我们可以使用任何名字。
+
+##### 模板参数与作用域
+模板参数遵循普通作用域规则。一个模板参数名的可用范围是在其声明之后，至模板声明或定义结束之前。与任何其他名字一样，模板参数会隐藏外层作用域中声明的相同名字。但是，与大多数其他上下文不同，在模板内不能重用模板参数名:
+```C++
+typedef double A;
+template <typename A, typename B> void f(A a, B b)
+{
+    A tmp = a;  // tmp的类型为模板参数A的类型，而非double
+    double B;   // 错误：重声明模板参数B
+}
+```
+正常名字隐藏规则决定了A的typedef被类型参数A隐藏。因此,tmp不是一个double,其类型是使用f时绑定到类型参数A的类型。由于我们不能重用模板参数名，声明名字为B的变量是错误的。<br>
+由于参数名不能重用，所以一个模板参数名在一个特定模板参数列表中只能出现一次。
+
+##### 模板声明
+模板声明必须包含模板参数:
+```C++
+// 声明但不定义compare和Blob
+template <typename T> int compare(const T&, const T&);
+template <typename T> class Blob;
+```
+与函数参数相同，声明中的模板参数名字不必与定义中相同:
+```C++
+// 3个calc都指向相同的函数模板
+template <typename T> T calc(const T&, const T&); // 声明
+template <typename U> U calc(const U&, const U&); //声明
+// 模板定义
+template <typename Type>
+Type calc(const Type& a, const Type& b) 
+{
+    /* ... */
+}
+```
+当然，一个给定模板的每个声明和定义必须有相同数量和种类的参数。
+##### 使用类的类型成员
+我们用作用域运算符(::)访问static成员和类型成员。在普通(非模板)代码中，编译器掌握类的定义。因此，它知道通过作用域运算符访问的名字是类型还是static成员。例如，如果我们写下string::size_type，编译器有string的定义，从而知道size_type是一个类型。<br>
+但对于模板代码就存在困难。例如，假定T是一个模板类型参数，当编译器遇到类似T::mem这样的代码时，它不会知道mem是一个类型成员还是一个static数据成员，直到实例化时才会知道。但是，为了处理模板，编译器必须知道名字是否表示一个类型。例如，T是一个类型参数名字，当编译器遇到如下形式语句时:
+```C++
+T::size_type * p;
+```
+需要知道我们是正在定义一个名为p的变量还是将一个名为size_type的static数据成员与名为p的变量相乘。<br>
+默认情况下，C++语言假定通过作用域运算符访问的名字不是类型。因此，如果我们希望使用一个模板类型参数的类型成员，就必须显式告诉编译器该名字是一个类型。我们通过使用关键字typename来实现这一点:
+```C++
+template <typename T>
+typename T::value_type top(const T& c)
+{
+    if (!c.empty())
+    {
+        return c.back();
+    }
+    else 
+    {
+        return typename T::value_type();
+    }
+}
+```
+我们的top函数期待一个容器类型实参，它使用typename指明其返回类型并在c中没有元素时生成一个初始化元素返回给调用者。
+
+##### 默认模板实参
+在C++11标准中，我们可以为函数和类模板提供**默认模板实参**(default template argument)。更早的C++标准只允许为类模板提供默认实参。<br>
+我们重写compare,默认使用标准库的less函数对象模板:
+```C++
+// compare有一个默认模板实参less<T>和一个默认函数实参F()
+template <typename T, typename F= less<T>>
+int compare (const T &v1, const T &v2, F f= f())
+{
+    if (f(v1,v2))
+    {
+        return -1;
+    }
+    if (f(v2,v1))
+    {
+        return 1;
+    }
+    return 0;
+}
+```
+我们为模板添加了第二个类型参数，名为F，表示可调用对象的类型；并定义了一个新的函数参数f,绑定到一个可调用对象上。<br>
+我们为此模板参数提供了默认实参，并为其对应的函数参数也提供了默认实参。默认模板实参指出compare将使用标准库的less函数对象类，它是使用与compare一样的类型参数实例化。默认函数实参指出f将是类型F的一个默认初始化对象。<br>
+当用户调用这个版本的compare时，可以提供自己的比较操作，但这并不是必需的:
+```C++
+bool i = compare(0, 42);  // 使用less; i 为 -1
+// 结果依赖于item1和item2中的isbn
+Sales_data item1(cin), item2(cin);
+bool j = compare(item1, item2, compareIsbn);
+```
+第一个调用使用默认函数实参，即，类型less<T>的一个默认初始化对象。在此调用中，T为int,因此可调用对象类型为less<int>。compare的这个实例化版本将使用less<int>进行比较操作。<br>
+第二个调用中，我们传递给compare三个实参:compareIsbn和两个Sales_data类型的对象。当传递给compare三个实参时，第三个实参的类型必须是一个可调用对象，该可调用对象的返回类型必须能转换为bool值，且接受的实参类型必须与compare的前两个实参类型兼容。与往常一样，模板参数的类型从它们对应的函数实参推断而来。在此调用中，T的类型被推断为Sales_data,F被推断为compareIsbn类型<br>
+与函数默认实参一样，对于一个模板参数，只有当它右侧所有参数都有默认实参时，它才可以有默认实参。
+##### 模板默认实参与类模板
+无论何时使用一个类模板，我们都必须在模板名之后接上尖括号。尖括号指出类必须从一个模板实例化而来。特别是，如果一个类模板为其所有模板参数都提供了默认实参，且我们希望使用这些默认实参，就必须在模板名之后跟一个尖括号对:
+```C++
+template <class T= int> class Numbers{
+    public:
+        Numbers(T v=0):val(v) {}
+    private:
+        T val;
+};
+Numbers <double> lots_of_precision;
+Numbers<> average_precision;        // 空<>表示我们希望使用默认类型
+```
+我们实例化了两个Numbers版本:average_precision是用int替代T实例化的;lots_of_precision使用double 替代T实例化得到的。
