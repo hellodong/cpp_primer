@@ -516,6 +516,43 @@ template <class T= int> class Numbers{
         T val;
 };
 Numbers <double> lots_of_precision;
-Numbers<> average_precision;        // 空<>表示我们希望使用默认类型
+Numbers <> average_precision;        // 空<>表示我们希望使用默认类型
 ```
 我们实例化了两个Numbers版本:average_precision是用int替代T实例化的;lots_of_precision使用double 替代T实例化得到的。
+
+#### 成员模板
+一个类(无论是普通类还是模板类)可以包含本身是模板的成员函数。这种成员成为**成员模板**(member template)。成员模板不能是虚函数。
+
+##### 普通类的成员模板
+作为普通类包含成员模板，我们定义一个类，类似unique_ptr所使用的默认删除其类型。类似默认删除器，我们的类将包含一个重载的函数调用运算符，它接受一个指针并对此指针执行delete。与默认删除器不同，我们的类还将在删除器被执行时打印一条信息。由于希望删除器适用于任何类型，所以我们将调用运算符定义为一个模板:
+```C++
+// 函数对象类，对给定指针执行delete
+class DebugDelete{
+    public:
+        DebugDelete(std::ostream &s=std::cerr):os(s){}
+        template <typename T> void operator()(T *p) const 
+        { os << "deleting unique_ptr" << std:endl; delete p;}
+    private:
+        std::ostream &os;
+};
+```
+与任何其他模板相同，成员模板也是以模板参数列表开始的。每个DebugDelete对象都有一个ostream成员，用于写入数据；还包含一个自身是模板的成员函数。我们可以用这个类替代delete：
+```c++
+double* p = new double;
+DebugDelete d;          // 可像delete表达式一样使用的对象
+d(p);                   // 调用DebugDelete::operator()(double *), 释放p
+int *ip = new int;
+DebugDelete()(ip);      //在一个临时DebugDelete对象上调用operator()(int *)
+```
+调用一个DebugDelete对象会delete其给定的指针，我们也可以将DebugDelete用作unique_ptr的删除器。为了重载unique_ptr的删除器，我们在尖括号内给出删除器类型，并提供一个这种类型的对象给unique_ptr的构造函数:
+```C++
+unique_ptr<int, DebugDelete> p (new int, DebugDelete());
+unique_ptr<std::string, DebugDelete> sp (new std::string, DebugDelete());
+```
+在本例中，我们声明P的删除器类型为DebugDelete,并在p的构造函数中提供了该类型的一个未命名对象。<br>
+unique_ptr的析构函数会调用DebugDelete的调用运算符。因此，无论何时unique_ptr的析构函数实例化时，DebugDelete的调用运算符都会实例化:因此，上述定义会这样实例化。
+```C++
+// DebugDelete成员模板实例化样例
+void DebugDelete::operator() (int *p) const {delete p;}
+void DebugDelete::operator() (std::string *sp) const {delete sp;}
+```
