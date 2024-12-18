@@ -556,3 +556,37 @@ unique_ptr的析构函数会调用DebugDelete的调用运算符。因此，无�
 void DebugDelete::operator() (int *p) const {delete p;}
 void DebugDelete::operator() (std::string *sp) const {delete sp;}
 ```
+
+##### 类模板成员模板
+对于类模板，我们可以为其定义成员模板。在此情况下，类和成员各自有自己的、独立的模板参数。我们将为Blob类定义一个构造函数，它接受两个迭代器，表示要拷贝的元素范围。我们希望支持不同类型序列的迭代器，因此将构造函数定义为模板:
+```C++
+template <typename T> class Blob{
+    template <typename It> Blob(It b, It e);
+};
+```
+此构造函数有自己的模板类型参数It,作为它的两个函数参数类型。<br>
+与类模板的普通函数成员不同，成员模板是函数模板。当我们在类模板外定义一个成员模板时，必须同时为类模板和成员模板提供模板参数列表。类模板的参数列表在前，后跟成员自己的模板参数列表:
+```C++
+template <typename T>   //类的类型参数
+template <typename It>  //构造寒素的类型参数
+   Blob<T>::Blob(It b, It e): data(std::make_shared<std::vector<T>>(b,e)){}
+```
+此例中，我们定义了一个类模板的成员，类模板有一个模板类型参数，命名为T。而成员自身是一个函数模板，它有一个名为It的类型参数。<br>
+
+为了实例化一个类模板的成员模板，我们必须同时提供类和函数模板的实参。与往常一样，我们在哪个对象上调用成员模板，编译器就根据该对象的类型推断模板参数的实参。与普通函数模板相同，编译器通常根据传递给成员模板的函数实参来推断它的模板实参:
+```C++
+int ia[] = {0,1,2,3,4,5,6,7,8,9};
+std::vector<long> vi = {0,1,2,3,4,5,6,7,8,9};
+std::list<const char *> w={"now", "is", "the", "time"};
+// 实例化Blob<int>类及其接受两个int*参数的构造函数
+Blob<int> a1(begin(ia), end(ia));
+// 实例化Blob<int>类的接受两个vector<long>::iterator参数构造函数
+Blob<int> a2(vi.begin(), vi.end());
+// 实例化Blob<int>类的接受两个vector<long>::iterator参数构造函数
+Blob<std::string> a3(w.begin(), w.end());
+```
+当我们定义a1时，显示的指出编译器应该实例化一个int版本的Blob。构造函数自己的类型参数通过begin(ia)和end(ia)类型推断，结果为int*。因此，a1定义实例化如下版本:
+```C++
+Blob<int>::Blob(int *, int *);
+```
+a2的定义使用了已经实例化的Blob<int>类，并用vector<short>::iterator替换It实例化构造函数。a3的定义(显示地)实例化了一个string版本的Blob，并(隐式的)实例化了该类的成员模板构造函数，其模板参数被绑定到list<const char *>。
