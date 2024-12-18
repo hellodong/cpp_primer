@@ -590,3 +590,40 @@ Blob<std::string> a3(w.begin(), w.end());
 Blob<int>::Blob(int *, int *);
 ```
 a2的定义使用了已经实例化的Blob<int>类，并用vector<short>::iterator替换It实例化构造函数。a3的定义(显示地)实例化了一个string版本的Blob，并(隐式的)实例化了该类的成员模板构造函数，其模板参数被绑定到list<const char *>。
+
+#### 控制实例化
+当模板被使用时才会进行实例化这一特性意味着，相同实例可能出现在多个对象文件中。当两个或多个独立编译的源文件使用了相同的模板，并提供了相同模板参数时，每个文件中就都会有该模板的一个实例。<br>
+在大系统中，在多个文件中实例化相同模板的额外开销可能非常严重。在C++11标准中，我们可以通过显示实例化(explicit instantiation)来避免这种开销。一个显式实例化有如下形式:
+```C++
+extern template declaration; // 实例化声明
+template declaration;        // 实例化定义
+```
+*declaration*是一个类或函数声明，其中所有模板参数已被替换为模板实参。例如:
+```C++
+extern template class Blob<string>;             // 声明
+template int compare(const int &, const int &); // 定义
+```
+当编译器遇到extern模板声明时，它不会在本文件中生成实例化代码。将一个实例化声明为extern就表示承诺在程序其他位置有该实例化的一个非extern声明。对于一个给定的实例化版本，可能有多个extern声明，但必须只有一个定义。<br>
+由于编译器在使用一个模板时自动对其实例化，因此extern声明必须出现在任何使用此实例化版本的代码之前:
+```C++
+// 这些模板类型必须在程序其他位置进行实例化
+extern template class Blob<string>;
+extern template int compare<const int &, const int &>;
+Blob<string> sa1, sa2;  // 实例化会出现在其他位置
+// Blob<int>及其接受initializer_list的构造函数在本文件中实例化
+Blob<int> a1 = {0,1,2,3,4,5,6,7,8,9};
+Blob<int> a2(a1);  //拷贝构造函数在本文件中实例化
+int i = compare(a1[0], a2[0]); // 实例化出现在其他位置
+```
+上面源文件的.o文件将包含Blob<int>的实例及其接受initializer_list参数的构造函数和拷贝构造函数实例。而compare<int>函数和Blob<string>类将不再本文件中进行实例化。这些模板的定义必须出现在程序的其他文件中:
+```C++
+// templateBuild.cpp
+template int compare(const int &, const int &);
+template class Blob<string>; // 实例化类模板的所有成员
+```
+当编译器遇到一个实例化定义时，它为其生成代码。因此，文件templateBuild.o将会包含compare的int实例化版本定义和Blob<string>类的定义。当我们编译此应用程序时，必须将templateBuild.o和上面的.o连接在一起。
+- 对每个实例化声明，在程序中某个位置必须有其显式的实例化定义
+
+一个类模板的实例化定义会实例化该模板的所有成员，包括内敛的成员函数。当编译器遇到一个实例化定义时，它不了解程序使用哪些成员函数。因此，与处理类模板的普通实例化不同，编译器会实例化该类的所有成员。即使我们不使用某个成员，它也会被实例化。因此，我们用来显示实例化一个类模板类型，必须能用于模板的所有成员。
+- 一个类模板的实例化定义中，所有类型必须能用于模板的所有成员函数。
+
