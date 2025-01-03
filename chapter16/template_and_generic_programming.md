@@ -713,3 +713,89 @@ compare<long>(lng, 1024);   // 正确: 实例化compare(long, long)
 compare<int>(lng, 1024);    // 正确: 实例化compare(int, int)
 ```
 第一个调用是错误的，因为传递给compare的实参必须具有相同的类型。如果我们显式指定模板类型参数，就可以进行正常类型转换了。因此，调用compare<long>等价于调用一个接受两个const long&参数的函数。int类型的参数被自动转化为long。在第三个调用中，T被显式指定为int,因此lng被转换为int。
+
+##### 尾置返回类型与类型转换
+当我们希望用户确定返回类型时，用显式模板实参表示模板函数的返回类型是很有效的。但在其他情况下，要求显式指定模板实参会给用户增添额外负担，而且不会带来什么好处。例如，我们可能希望编写一个函数，接受表示序列的一对迭代器和返回序列中的一个元素引用:
+```C++
+template <typename It>
+??? &fcn(It beg, It end)
+{
+    // 处理序列
+    return *beg;    //返回序列中一个元素的引用
+}
+```
+我们并不知道返回结果的准确类型，但知道所需类型是所处理的序列的元素类型:
+```C++
+vector<int> vi = {1,2,3,4,5};
+Blob<string> ca = {"hi", "bye"};
+auto &i = fcn(vi.begin(), vi.end());  // fcn 应该返回 int &
+auto &s = fcn(ca.begin(), ca.end());  // fcn 应该返回 string &
+```
+此例中，我们知道函数应该返回\*beg,而且知道我们可以用decltype(\*beg)来获取此表达式的类型。但是，在编译器遇到函数的参数列表之前，beg都是不存在的。为了定义此函数，我们必须使用尾置返回类型。由于尾置返回出现在参数列表之后，它可以使用函数的参数：
+```C++
+template <typename It>
+auto fcn(It beg, It end) ->decltype(*beg)
+{
+    // 处理序列
+    return *beg;  // 返回序列中一个元素的引用
+}
+```
+此例中我们通知编译器fcn的返回类型与解引用beg参数的结果类型相同。解引用运算符返回一个左值，因此通过decltype推断的类型为beg表示的元素的类型的引用。因此，如果对一个string序列调用fcn,返回类型将是string&。如果是int序列，则返回类型是int&。
+
+##### 进行类型转换的标准库模板类
+有时我们无法直接获得所需要的类型。例如，我们可能希望编写一个类似fcn的函数，但返回一个元素的值而非引用。在编写这个函数的过程中，我们面临一个问题:对于传递参数的类型，我们几乎一无所知。在此函数中，我们知道唯一可以使用的操作是迭代器操作，而所有迭代器操作都不会生成元素，只能生成元素的引用。<br>
+为了获得元素类型，我们可以使用标准库的**类型转换**(type transformation)模板。这些模板定义在头文件type_traits中。这个头文件中的类通常用于所谓模板元程序设计。
+类型转换模板在普通编程中也很有用。<br>
+在本例中，我们可以使用remove_reference来获得元素类型。remove_reference模板有一个模板类型参数和一个名为type的(public)类型成员。如果我们用一个引用类型实例化remove_reference，则type将表示被引用的类型。例如，如果我们实例化remove_reference<int &>, 则type成员将是int。类似的，如果我们实例化remove_reference<string &>, 则type成员将是string, 依此类推。更一般的，给定一个迭代器beg:
+```C++
+remove_reference<decltype(*beg)>::type
+```
+将获得beg引用的元素的类型：decltype(*beg)返回元素类型的引用类型。remove_reference::type脱去引用，剩下元素类型本身。组合使用remove_reference、尾置返回及decltype,我们就可以在函数中返回元素值的拷贝:
+```C++
+  // 为了使用模板参数的成员，必须用typename
+template <typename It>
+auto fcn2(It beg, It end) -> typename remove_reference<decltype(*beg)>::type
+{
+    return *beg;    // 返回序列中一个元素的拷贝
+}
+```
+type 是一个类的成员，该类依赖于一个模板参数。因此，我们必须在返回类型的声明中使用typename来告知编译器，type表示一个参数:
+
+<table>
+    <tr>
+        <th>对Mod<T>,其中Mod为</th>
+        <th>若T为</th>
+        <th>则Mod<T>::type为</th>
+    </tr>
+    <tr>
+        <td>remove_reference</td>
+        <td>X&或X&&<br>否则</td>
+        <td>X<br>T</td>
+    </tr>
+    <tr>
+        <td>add_const</td>
+        <td>X&、const X 或函数<br>否则</td>
+        <td>T<br>const T</td>
+    </tr>
+    <tr>
+        <td>add_lvalue_reference</td>
+        <td>X&<br>X&&<br>否则</td>
+        <td>T<br>X&<br>T&</td>
+    </tr>
+    <tr>
+        <td>add_rvalue_reference</td>
+        <td>X&或X&&<br>否则</td>
+        <td>T<br>T&&</td>
+    </tr>
+    <tr>
+        <td>remove_pointer</td>
+        <td>X&或X&&<br>否则</td>
+        <td>X<br>T</td>
+    </tr>
+    <tr>
+        <td>add_pointer</td>
+        <td>X&或X&&<br>否则</td>
+        <td>X*<br>T*</td>
+    </tr>
+</table>
+每个模板都有一个名为type的public成员，表示一个类型。此类型与模板自身的模板类型参数相关，其关系如模板名所示。如果不可能转换模板参数，则type成员就是模板参数类型本身。例如，如果T是一个指针类型，则remove_pointer<T>::type是T指向的类型。如果T不是一个指针，则无须进行任何转换，从而type具有T相同的类型。
