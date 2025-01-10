@@ -899,3 +899,50 @@ template <typename T> void f(T&&);          // 绑定到非const右值
 template <typename T> void f(const T&);     // 左值和const 右值
 ```
 与非模板函数一样，第一个版本将绑定到可修改的右值，而第二个将绑定到左值或const右值。
+
+#### 理解std::move
+标准库move函数是使用右值引用的模板的一个例子。研究move是如何工作的可以帮助我们巩固对模板的理解和使用。<br>
+虽然不能直接将一个右值引用绑定到一个左值上，但可以用move获得一个绑定到左值上的右值引用。move本质可以接受任何类型的实参。
+
+##### std::move如何定义
+标准库定义的move：
+```C++
+// 在返回类型和类型转换中用到typename
+template <typename T>
+typename remove_reference<T>::type&& move(T&& t)
+{
+    return static_cast<typename remove_reference<T>::type&&>(t);
+}
+```
+move函数参数T&&是一个指向模板类型参数的右值引用。通过引用折叠，此参数可以与任何类型的实参匹配。特别是，我们既可以传递给move一个左值，也可以传递给它一个右值:
+```C++
+std::string s1("hi!"), s2;
+s2 = std::move(std::string("bye!"));    //正确，从一个右值移动数据
+s2 = std::move(s1);                     //正确: 但在赋值后，s1的值是不确定的
+```
+##### std::move 如何工作的
+在第一个赋值中，传递给move的实参是string的构造函数的右值结果 ---- string("bye!")。如我们已经见到过的，当向一个右值引用函数传递一个右值时，有实参推断出的类型为被引用的类型。因此，在std::move(std::string("bye!"))中:
+
+- 推断出T的类型为std::string。
+- 因此，remove_reference用std::string进行实例化。
+- remove_reference<std::string>的type成员是std::string。
+- move的返回类型是std::string&&。
+- move的函数参数t的类型是std::string&&。
+
+这个调用实例化move<string>， 即函数:
+```C++
+std::string&& std::move(std::string&& t);
+```
+函数体返回static_cast<std::string&&>(t)。t的类型已经是std::string&&, 于是类型转换什么都不做。<br>
+考虑第二个赋值，std::move(s1)。在此调用中，传递给move的实参是一个左值：
+
+- 推断出T的类型为std::string&(std::string的引用，而非普通std::string)。
+- remove_reference用std::string&实例化
+- move的返回类型仍然是std::string&&。
+- move的函数参数t实例化为std::string& &&, 会折叠为std::string&。
+
+这个调用实例化move<std::string&>，即:
+```C++
+std::string& move(std::string &t);
+```
+这正是我们所寻求的---- 我们希望将一个右值引用绑定到一个左值。这个实例的函数体返回static_cast<std::string&&>(t)。在此情况下，t的类型为std::string&,static_cast将其转换为std::string&&。
