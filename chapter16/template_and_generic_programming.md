@@ -1045,4 +1045,106 @@ void flip(F f, T1 &&t1, T2 &&t2)
 3. 否则，此调用有歧义。
 
 ##### 编写重载函数
-作为一个例子，我们将构造一组函数，它们在调试中可能很有用。我们将这些调试函数命名为debug_rep,每个函数都返回一个给定对象的std::string表示。
+作为一个例子，我们将构造一组函数，它们在调试中可能很有用。我们将这些调试函数命名为debug_rep,每个函数都返回一个给定对象的std::string表示。我们首先编写此函数最通用版本，将它定义为一个模板，接受一个const对象的引用:
+```C++
+// 打印任何我们不能处理的类型
+template <typename T> std::string debug_rep(const T &t)
+{
+    std::ostingstream ret;
+    ret << t;               // 使用T的输出运算符打印t的一个表示形式
+    return ret.str();       // 
+}
+```
+接下来我们定义打印指针的debug_rep版本:
+```c++
+// 打印指针的值，后跟指针指向的对象。此函数不能用于char *;
+template <typename T> std::string debug_rep(T *p)
+{
+    std::ostingstream ret;
+    ret << "pointer: " << p;     // 打印指针本身的值
+    if (p)
+        ret << " " << debug_rep(*p);  // 打印p指向的值
+    else 
+        ret << " null pointer"; // 或指出p为空
+    return ret.str();  // 返回ret绑定的string的一个副本
+}
+```
+此版本生成一个string,包含指针本身的值和调用debug_rep获得的指针指向的值。注意此函数不能用于打印字符指针，因为IO库为char *值定义了一个<<版本，此版本假定指针表示一个空字符结尾的字符数组，并打印数组的内容而非地址值。<br>
+可以这样使用这些函数:
+```C++
+std::string s("hi");
+std::cout << debug_rep(s) << std::endl;
+```
+上面的调用只有第一个版本的debug_rep是可行的。 第二个debug_rep版本要求一个指针参数，但在此调用中我们传递的是一个非指针对象。因此编译器无法从一个非指针实参实例化一个期望指针类型参数的函数模板，因此实参推断失败。由于只有一个可行函数，所以此函数被调用。<br>
+如果我们调用debug_rep 传入一个指针:
+```C++
+std::cout << debug_rep(&s) << std::endl;
+```
+两个函数都生成可行的实例：
+- debug_rep(const std::string *&), 由第一个版本的debug_rep实例化而来，T被绑定到std::string *。
+- debug_rep(const std::string *), 由第二个版本的debug_rep实例化而来，T被绑定到const std::string。
+
+正常函数匹配无法区分这两个函数。我们可能觉得这个调用将是有歧义的。但是，根据重载函数模板的特殊规则，此调用被解析为debug_rep(T*),即，更特例化的版本。<br>
+设计这条规则原因:没有它，将无法对一个const的指针调用指针版本的debug_rep。问题在于模板debug_rep(const T&)本质上可以用于任何类型，包括指针类型。此模板比debug_rep(T*)更通用，后者只能用于指针类型。没有这条规则，传递const的指针的调用永远是有歧义的。
+
+##### 非模板和模板重载
+定义一个普通非模板版本的debug_rep打印双引号包围的string：
+```C++
+std::string debug_rep(const std::string &s)
+{
+    return '"' + s + '"';
+}
+```
+我们对一个string调用debug_rep时:
+```C++
+std::string s("hi");
+std::cout << debug_rep(s) << std::endl; 
+```
+有两个同样好的可行函数:
+- debug_rep<std::string>(const std::string &), 第一个模板，T被绑定到string*。
+- debug_rep(const std::string &), 普通非模板函数.
+
+本例中，两个函数具有相同的参数列表，因此显然两者提供同样好的匹配。但是，编译器会选择非模板版本。当存在多个同样好的函数模板时，编译器选择最特例化的版本，出于相同原因，一个非模板函数比一个函数模板更好。
+
+##### 重载模板和类型转换
+还有一种情况我们到目前为止尚未讨论：C风格字符串指针和字符串字面常量。现在有了一个接受string的debug_rep版本，我们可能期望一个传递字符串的调用会匹配这个版本。但是，考虑这个调用:
+```C++
+std::cout << debug_rep("hi world!") << std::endl;
+```
+本例中所有三个debug_rep版本都是可行的:
+- debug_rep(const T&), T被绑到char[10]。
+- debug_rep(T*), T被绑到const char。
+- debug_rep(const std::string &), 要求从const char*到std::string的类型转换。
+
+对给定实参来说，两个模板都提供精确匹配----第二个模板需要进行一次数组到指针的转换，对于函数匹配来说，这种转换被认为是精确匹配。非模板版本是可行的，但需要进行一次用户定义的类型转换，因此它没有精确匹配那么好，所以两个模板成为可能调用的函数。与之前一样，T*版本更加特例化，编译器会选择它。<br>
+如果我们希望将字符指针按string处理，可以定义另外两个非模板重载版本:
+```C++
+// 将字符串指针转换为string, 并调用string版本的debug_reg
+std::string debug_rep(char *p)
+{
+    return debug_rep(std::string(p));
+}
+
+std::string debug_rep(const char *p)
+{
+    return debug_rep(std::string(p));
+}
+```
+
+##### 缺少声明可能导致程序行为异常
+值得注意的是，为了使char *版本的debug_rep正确工作，在定义此版本时，debug_rep(const std::string&)的声明必须在作用域中。否则，就可能调用错误的debug_rep版本:
+```C++
+template <typename T>std::string debug_rep(const T &t);
+template <typename T>std::string debug_rep(T *p);
+// 为了使debug_rep(char *)的定义正确工作，下面的声明必须在作用域中
+std::string debug_rep(const std::string &);
+std::string debug_rep(char *p)
+{
+    // 如果接受一个const string &的版本声明不在作用域中
+    // 返回语句将调用debug_rep(const T&)的T实例化为string的版本
+    return debug_rep(std::string(p));
+}
+```
+如果使用了一个忘记声明的函数，代码将编译失败。但对于重载函数模板的函数而言，则不是这样。如果编译器可以从模板实例化出于调用匹配的版本，则缺少的声明就不重要了。在本例中，如果忘记了声明接受std::string参数的debug_rep版本，编译器会默认实例化const T&的模板版本。
+
+- 在定义任何函数之前，记得声明所有重载的函数版本。这样就不必担心编译器由于未遇到你希望调用的函数而实例化一个并非你所需的版本。
