@@ -1148,3 +1148,96 @@ std::string debug_rep(char *p)
 如果使用了一个忘记声明的函数，代码将编译失败。但对于重载函数模板的函数而言，则不是这样。如果编译器可以从模板实例化出于调用匹配的版本，则缺少的声明就不重要了。在本例中，如果忘记了声明接受std::string参数的debug_rep版本，编译器会默认实例化const T&的模板版本。
 
 - 在定义任何函数之前，记得声明所有重载的函数版本。这样就不必担心编译器由于未遇到你希望调用的函数而实例化一个并非你所需的版本。
+
+### 可变参数模板
+一个**可变参数模板**(variadic template) 就是一个接受可变数目参数的模板函数或模板类。可变数目的参数被称为**参数包**(parameter packet)。存在两种参数包:**模板参数包**(template parameter packet)，表示零个或多个模板参数:**函数参数包**(function parameter packet),表示零个或多个函数参数。<br>
+我们用一个省略号来指出一个模板参数或函数参数表示一个包。在一个模板参数列表中，class...或typename... 指出接下来的参数表示零个或多个类型的列表:一个类型名后面跟一个省略号表示零个或多个给定类型的非类型参数列表。在函数参数列表中，如果一个参数的类型是一个模板参数包，则此参数也是一个函数参数包。例如:
+```C++
+// Args 是一个模板参数包；rest是一个函数参数包
+// Args 表示零个或多个模板类型参数
+// rest 表示零个或多个函数参数
+template <typename T, typename... Args>
+void foo(const T &t, const Args& ... rest);
+```
+声明foo是一个可变参数函数模板，它有一个名为T的类型参数，和一个名为Args的模板参数包。这个包表示零个或多个额外的类型参数。foo的函数参数列表包含一个const &类型的参数，指向T的类型，还包含一个名为rest的函数参数包，此包表示零个或多个函数参数。<br>
+与往常一样，编译器从函数的实参推断模板参数类型。对于一个可变参数模板，编译器还会推断包中参数的数目。例如，给定下面的调用:
+```C++
+int i = 0;double d= 3.14; string s = "how now brown cow";
+foo(i, s, 42, d);   // 包中有三个参数
+foo(s, 42, "hi");   // 包中有两个参数
+foo(d, s);          // 包中有一个参数
+foo("hi");          // 空包
+```
+编译器会为foo实例化出四个不同的版本:
+```C++
+void foo(const int&, const std::string &, const int &, const double &);
+void foo(const std::string &, const int &, const char [3]&);
+void foo(const double &, const string &);
+void foo(const char[3]&);
+```
+每个实例中，T的类型都是从第一个实参的类型推断出来的。剩下的实参提供函数额外实参的数目和类型。
+
+##### sizeof...运算符
+我们需要知道包中有多少元素时，可以使用sizeof...运算符。类似sizeof, sizeof...也返回一个常量表达式，而且不会对其实参求值:
+```C++
+template <typename ...Args> void g(Args ... args)
+{
+    std::cout << sizeof...(Args) << std::endl;  // 类型参数的数目
+    std::cout << sizeof...(args) << std::endl;  // 函数参数的数目
+}
+```
+
+#### 编写可变参数函数模板
+我们可以使用一个initializer_list 来定义一个可接受可变数目实参的函数。但是，所有实参必须具有相同的类型(或它们的类型可以转换为同一个公共类型)。当我们既不知道想要处理的实参的数目也不知道它们的类型时，可变参数函数是很有用的。作为一个例子，我们将定义一个函数，它类似较早的error_msg函数，差别仅在于新函数实参的类型也是可变的。我们首先定义一个名为print的函数，它在一个给定流上打印给定实参列表的内容。<br>
+可变参数函数通常是递归的。第一步调用处理包中的第一个实参，然后用剩余实参调用自身。我们的print函数也是这样的模式，每次递归调用将第二个实参打印到第一个实参表示的流中。为了终止递归，我们还需要定义一个非可变参数的print函数，它接受一个流和一个对象:
+```C++
+// 用来终止递归并打印最后一个元素的函数
+// 此函数必须在可变参数版本的print定义之前声明
+template <typename T>
+std::ostream &print(std::ostream &os, const T &t)
+{
+    return os << t; // 包中最后一个元素之后不打印分隔符
+}
+// 包中除了最后一个元素之外的其他元素都会调用这个版本的print
+template <typename T, typename... Args>
+std::ostream &print(ostream &os, const T &t, const Args&... rest)
+{
+    os << t << ", ";            // 打印第一个实参 
+    return print(os, rest...);  // 递归调用，打印其他实参
+}
+```
+第一个版本的print负责终止递归并打印初始调用中的最后一个实参。第二个版本的print是可变参数版本，它打印绑定到t的实参，并调用自身来打印函数参数包中的剩余值。这段程序的关键部分是可变参数函数中对print的调用:
+```C++
+return print(os, reset...);     // 递归调用，打印其他实参
+```
+我们的可变参数版本的print函数接受三个参数，一个ostream&, 一个const T&和一个参数包。而此调用只传递了两个实参。其结果是rest中的第一个实参被绑定到t，剩余实参形成下一个print调用的参数包。因此，每个调用中，包中的每一个实参被移除，成为绑定到t的实参。即，给定:
+```C++
+print(std::cout, i, s, 42);   // 包中有两个参数
+```
+递归执行如下:
+<table>
+    <tr>
+        <th>调用</th>
+        <th>t</th>
+        <th>rest...</th>
+    </tr>
+    <tr>
+        <td>print(std::cout, i, s, 42)</td>
+        <td>i</td>
+        <td>s, 42</td>
+    </tr>
+    <tr>
+        <td>print(std::cout, s, 42)</td>
+        <td>i</td>
+        <td>s, 42</td>
+    </tr>
+    <tr>
+        <td>print(std::cout, 42)</td>
+        <td>call 非可变参数print</td>
+        <td></td>
+    </tr>
+</table>
+前两个调用只能与可变参数版本的print匹配，非可变参数版本是不可行的，因为这俩个调用分别传递四个和三个实参，而非可变参数print只接受两个实参。<br>
+对于最后一次递归调用print(cout, 42), 两个版本都是可行的。这个调用传递两个实参，第一个实参类型为ostream &。因此，可变参数版本的print可以实例化为只接受两个参数:一个是ostream&参数，另一个是const T&参数。两个函数提供同样好的匹配。但是，非可变参数模板比可变参数模板更特例化，因此编译器选择非可变参数版本。
+
+- 当定义可变参数版本的print时，非可变参数版本的声明必须在作用域中。否则，可变参数版本会无线递归。
