@@ -1270,4 +1270,33 @@ print(os, s, 42);
 ```
 
 ##### 理解包扩展
-print中的函数参数包扩展仅仅将包扩展为其构成元素，C++语言还允许更复杂的扩展模式。
+print中的函数参数包扩展仅仅将包扩展为其构成元素，C++语言还允许更复杂的扩展模式。例如，我们可以编写第二个可变参数函数，对其每个实参调用debug_rep,然后调用print打印结果string:
+```C++
+// 在print调用中对每个实参调用debug_rep
+template <typename... Args>
+std::ostream &errorMsg(std::ostream &os, const Args&... rest)
+{
+    // print(os, debug_rep(a1), debug_rep(a2), ..., debug_rep(an))
+    return print(os, debug_rep(rest)...);
+}
+```
+这个print调用使用了模式debug_rep(rest)。此模式表示我们希望对函数参数包rest中的每个元素调用debug_rep。扩展结果将是一个逗号分隔的debug_rep调用列表。即，下面调用:
+```C++
+errorMsg(std::cerr, fcnName, code.num(), otherData, "other", item);
+```
+就好像我们这样编写代码一样:
+```C++
+print(std::cerr, debug_rep(fncName), debug_rep(code.num()), 
+                 debug_rep(otherData), debug_rep("otherData"), 
+                 debug_rep(item));
+```
+与之相对，下面的模式会编译失败:
+```C++
+// 将包传递给debug_rep; print(os, debug_rep(a1,a2,...,an))
+print(os, debug_rep(rest...));   // 错误：此调用无匹配函数
+```
+这段代码问题是我们在debug_rep调用中扩展了rest，它等价于:
+```C++
+print(std::cerr, debug_rep(fncName, code.num(), otherData,"otherData", item));
+```
+这个扩展中，我们试图用一个五个实参列表调用debug_rep,但并不存在此调用匹配的debug_rep版本。debug_rep函数不是可变参数的，而且没哪个debug_rep版本接受五个参数。
