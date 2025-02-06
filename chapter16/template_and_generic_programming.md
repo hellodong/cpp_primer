@@ -1300,3 +1300,49 @@ print(os, debug_rep(rest...));   // 错误：此调用无匹配函数
 print(std::cerr, debug_rep(fncName, code.num(), otherData,"otherData", item));
 ```
 这个扩展中，我们试图用一个五个实参列表调用debug_rep,但并不存在此调用匹配的debug_rep版本。debug_rep函数不是可变参数的，而且没哪个debug_rep版本接受五个参数。
+
+#### 转发参数包
+在C++11标准下，我们可以组合使用可变参数模板与forward机制来编写函数，实现将其实参不变地传递给其他函数。作为例子，我们将为StrVec类添加一个emplace_back 成员。标准库容器的emplace_back成员是一个可变参数成员模板，它用其实参在容器管理内存空间中直接构造一个元素。<br>
+我们为StrVec设计的emplace_back版本也应该是可变参数的，因为std::string有多个构造函数，参数各不相同。由于我们希望能使用std::string的移动构造函数，因此还需要保持传递给emplace_back的实参的所有类型信息。<br>
+如我们所见，保持类型信息是一个两阶段的过程。首先，为了保持实参中的类型信息，必须将emplace_back的函数参数定义为模板类型参数的右值引用:
+```C++
+class StrVec{
+    public:
+        template<class... Args>void emplace_back(Args&&...);
+};
+```
+模板参数包扩展中的模式是&&，意味着每个函数参数将是一个指向其对应实参的右值引用。其次，当emplace_back将这些实参传递给construct时，我们必须使用forward来保持实参的原始类型:
+```C++
+template <class... Args>
+inline
+void StrVec::emplace_back(Args&&... args)
+{
+    chk_n_alloc();
+    alloc.construct(first_free++, std::forward<Args>(args)...);
+}
+```
+emplace_back的函数体调用了chk_n_alloc来确保有足够空间容纳一个新元素，然后调用了construct在first_free指向的位置中创建了一个元素。construct调用中的扩展为
+```C++
+std::forward<Args>(args)...
+```
+既扩展了模板参数包Args,也扩展了函数参数包args。此模式生成如下形式的元素:
+```C++
+std::forward<Ti><ti>
+```
+其中Ti表示模板参数包中第i个元素的类型，ti表示函数参数包中第i个元素。例如，假定svec是一个StrVec,如果我们调用:
+```C++
+svec.emplace_back(10, 'c');
+```
+construct调用中模式会扩展出:
+```C++
+std::forward<int>(10), std::forward<char>('c')
+```
+通过在此调用中使用forward，我们保证如果用一个右值调用emplace_back,则construct也会得到一个右值。例如，在下面调用中:
+```C++
+svec.emplace_back(s1+s2);  //使用移动构造函数
+```
+传递给emplace_back的实参是一个右值，它将以如下形式传递给construct
+```C++
+std::forward<std::string>(std::string("the end"))
+```
+forward<std::string>的结果类型是std::string&&, 因此construct将得到一个右值引用实参。construct会继续将此实参传递给std::string的移动构造函数来创建新元素。
