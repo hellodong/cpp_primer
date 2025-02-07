@@ -1346,3 +1346,36 @@ svec.emplace_back(s1+s2);  //使用移动构造函数
 std::forward<std::string>(std::string("the end"))
 ```
 forward<std::string>的结果类型是std::string&&, 因此construct将得到一个右值引用实参。construct会继续将此实参传递给std::string的移动构造函数来创建新元素。
+
+### 模板特例化
+编写单一模板，使之对任何可能的模板实参都是最适合的，都能实例化，这并不总是能办到。在某些情况下，通用模板的定义对特定类型是不适合的：通用定义可能编译失败或做得不正确。其他时候，我们也可以利用某些特定知识来编写更高效的代码，而不是从通用模板实例化。当我们不能(或不希望)使用模板版本时，可以定义类或函数模板的一个特例化版本。<br>
+我们的compare函数是一个很好的例子，它展示了函数模板的通用定义不适合一个特定类型(即字符指针)的情况。我们希望compare通过调用strcmp比较两个字符指针而非比较指针值。实际上，我们已经重载了compare函数来处理字符串字面常量:
+```C++
+template <typename T>int compare(const T&, const T&);
+
+template <size_t N, size_t M> int compare(const char (&)[N], const char (&)[M]);
+```
+只有当我们传递给compare一个字符串字面常量或者一个数组时，编译器才会调用接受两个非类型模板参数的版本。如果我们传递给它字符指针，就会调用第一个版本:
+```C++
+const char *p1 = "hi", *p2 = "mom";
+compare(p1, p2);        // 调用第一个模板
+compare("hi", "mom");   // 调用有两个非类型参数的版本
+```
+我们无法将一个指针转换为一个数组的引用，因此当参数是p1和p2时，第二个版本的compare是不可行的。<br>
+为了处理字符指针(而不是数组)，可以为第一个版本的compare定义一个**模板特例化**(template specialization)版本。一个特例化版本就是模板的一个独立的定义，在其中一个或多个模板参数被指定为特定的类型。
+
+##### 定义函数模板特例化
+当我们特例化一个函数模板时，必须为原模板中的每个模板参数都提供实参。为了指出我们正在实例化一个模板，应使用关键字template后跟一个空尖括号对(<>)。空尖括号指出我们将为原模板的所有模板参数提供实参:
+```C++
+template <>
+int compare(const char* const &p1, const char * const &p2)
+{
+    return strcmp(p1, p2);
+}
+```
+理解此特例化版本的困难之处是函数参数类型。当我们定义一个特例化版本时，函数参数类型必须与一个先前声明的模板中对应的类型匹配。本例中我们特例化:
+```C++
+template <typename T>int compare(const T&, const T&);
+```
+其中函数参数为一个const类型的引用。类似类型别名，模板参数类型、指针及const之间相互作用会令人惊讶。<br>
+我们希望定义此函数的一个特例化版本，其中T为const char*。我们的函数要求一个指向此类型const版本的引用。一个指针类型的const版本是一个常量指针而不是指向const类型的指针。我们需要在特例化版本中使用的类型是const char *const &, 即一个指向const char 的const 指针的引用。
