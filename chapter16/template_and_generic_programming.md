@@ -1410,6 +1410,90 @@ namespace std{
 namespace std{
     template <>
     struct hash<Sales_data>
-    {};
+    {
+        typedef size_t result_type;
+        typedef Sales_data argument_type;
+        size_t operator() (const Sales_data &s) const;
+        // 我们的类使用合成的拷贝控制成员和默认构造函数
+    };
+    size_t
+    hash<Sales_data>::operator()(const Sales_data & s) const 
+    {
+        return hash<std::string>() (s.bookNo) ^ hash<unsigned>()(s.units_sold) ^ hash<double>()(s.revenue);
+    }
 }
 ```
+我们的hash<Sales_data>定义以template<>开始，指出我们正在定义一个全特例化的模板。我们正在特例化的模板名为hash,而特例化版本为hash<Sales_data>。接下来的类成员是按照特例化hash的要求而定义的。<br>
+类似其他任何类，我们可以在类内或类外定义特例化版本的成员，本例中就是在类外定义的。重载调用运算符必须为给定类型的值定义一个哈希函数。对于一个给定值，任何时候调用此函数都应该返回相同结果。一个好的哈希函数对不相等对象应该产生不同的结果。<br>
+本例中，我们将定义一个好的哈希函数的复杂任务交给了标准库。标准库为内置类型和很多标准库类型定义了hash类的特例化版本。我们使用一个hash<std::string>对象生成生成bookNo的哈希值，用一个hash<unsigned>对象生成units_sold哈希值，用一个hash<double>对象生成revenue的哈希值。我们将这些结果进行异或运算，形成给定Sales_data对象完整的哈希值。<br>
+我们的hash 函数计算所有三个数据成员的哈希值，与我们为Sales_data定义的operator==是兼容的。默认情况下，为了处理特定关键字类型，无序容器会组合使用key_type对应的特例化hash版本和key_type上的相等运算符。<br>
+假定我们的特例化版本在作用域中，当将Sales_data作为容器的关键字类型时，编译器就会自动使用此特例化版本:
+```C++
+unordered_multiset<Sales_data> SDest;
+```
+由于hash<Sales_data>使用Sales_data的私有成员，我们必须将它声明为Sales_data的友元:
+```C++
+template <class T> class std::hash;
+class Sales_data{
+    friend class std::hash<Sales_data>;
+};
+```
+这段代码指出特殊实例std::hash<Sales_data>是Sales_data的友元。由于此实例定义在std命名空间中，我们必须记得在friend声明中使用std::hash。
+
+- 为了让Sales_data的用户能使用hash的特例化版本，我们应该在Sales_data的头文件中定义该特例化版本。
+
+##### 类模板部分特例化
+与函数模板不同，类模板的特例化不必为所有模板参数提供实参。我们可以只指定一部分而非所有模板参数，或是参数的一部分而非全部特性。一个类模板的**部分特例化**(partial specialization)本身是一个模板，使用它时用户还必须为那些在特例化版本中未指定的模板参数提供实参。<br>
+- 我们只能部分特例化类模板，而不能部分特例化函数模板。 
+
+我们介绍了标准库remove_reference类型。该模板时通过一系列特例化版本来完成其功能的：
+```C++
+// 原始的、最通用的版本
+template <class T>struct remove_reference{
+    typedef T type;
+};
+// 部分特例化版本，将用于左值引用和右值引用
+template <class T> struct remove_reference <T&>  // 左值引用
+{typedef T type; };
+template <class T> struct remove_reference <T&&> // 右值引用 
+{typedef T type; };
+```
+第一个模板定义了最通用的模板。它可以用任意类型实例化：它将模板实参作为type成员的类型。接下来两个类是原始模板的部分特例化版本。<br>
+由于一个部分特例化版本本质是一个模板，与往常一样，我们首先定义模板参数。类似任何其他特例化版本，部分特例化版本的名字与原模板的名字相同。对每个未完全确定类型的模板参数，在特例化版本的模板参数列表中都有一项与之对应。在类名之后，我们为要特例化的模板参数指定实参，这些实参列于模板之后的尖括号中。这些实参与原始模板中的参数按位置对应。<br>
+部分特例化版本的模板参数列表是原始模板的参数列表的一个子集或者是一个特例化版本。在本例中，特例化版本的模板参数的数目与原始模板相同，但是类型不同。两个特例化版本分别用于左值引用和右值引用类型:
+```C++
+int i;
+// decltype(42) 为int, 使用原始模板
+remove_reference<decltype(42)>::type a;
+// decltype(i) 为int &, 使用第一个(T&)部分特例化版本
+remove_reference<decltype(i)>::type b;
+// decltype(std::move(i)) 为int&&, 使用第二个(即T&&)部分特例化版本
+remove_reference<std::move(i)>::type c;
+```
+3个变量a,b和c均为int类型。
+
+##### 特例化成员而不是类
+我们可以只特例化特定成员函数而不是特例化整个模板。例如，如果Foo是一个模板类，包含一个成员Bar,我们可以只特例化该成员:
+```C++
+template <typename T> struct Foo{
+    Foo(const T &t = T()): mem(t) {}
+    void Bar() {/* ... */}
+    T mem;
+};
+
+template <>           // 我们正在特例化一个模板
+void Foo<int>::Bar()  // 我们正在特例化Foo<int>的成员Bar
+{
+}
+```
+本例中我们只特例化Foo<int>类的一个成员，其他成员将由Foo模板提供:
+```C++
+Foo<std::string> fs;        // 实例化Foo<std::string>::Foo()
+fs.bar();                   // 实例化Foo<std::string>::Bar()
+Foo<int> fi;                // 实例化Foo<int>::Foo()
+fi.Bar();                   // 使用我们特例化版本的Foo<int>::Bar()
+```
+当我们使用int之外的任何类型使用Foo时，其成员像往常一样进行实例化。当我们用int使用Foo时，Bar之外的成员像往常一样进行实例化。如果我们使用Foo<int>的成员Bar,则会使用我们定义的特例化版本。
+
+
+
