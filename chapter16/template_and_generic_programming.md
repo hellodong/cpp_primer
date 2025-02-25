@@ -88,11 +88,15 @@ int compare(const char (&p1)[N], const char (&p2)[M])
     return strcmp(p1, p2);
 }
 ```
+
 当我们调用这个版本时compare时:
-```C++`
+
+```C++
 compare("hi","mom");
 ```
+
 编译器会使用字面常量的大小来替代N和M，从而实例化模板。记住，编译器会在一个字符串字面常量的末尾插入一个空字符为终结符，因此编译器会实例化如下版本：
+
 ```C++
 int compare(const char (&p1)[3], const char (&p2)[4]);
 ```

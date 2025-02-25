@@ -725,4 +725,4 @@ basket.push_back(make_shared<Quote>("cpp_primer", 128));
 basket.push_back(make_shared<Bulk_quote>("Effective cpp", 50, 10, 0.8));
 std::cout << basket.back()->net_price(15)<<std::endl;
 ```
-实际调用的net_price版本依赖于指针对象的动态类型。<br>我们将basket定义成shared_ptr<Quote>,但是在第二个push_back中传入的是一个Bulk_quote对象的shared_ptr。正如我们可以将一个派生类的普通指针转换成基类指针一样，我们也能把一个派生类的智能指针转换成基类的智能指针。make_shared<Bulk_quote>返回一个shared_ptr<Bulk_quote>对象，当我们调用push_back时该对象被转换成shared_ptr<Quote>。因此尽管在形式上有所差别，但实际上basket的所有元素类型都是相同的。
+实际调用的net_price版本依赖于指针对象的动态类型。<br>我们将basket定义成shared_ptr\<Quote\>,但是在第二个push_back中传入的是一个Bulk_quote对象的shared_ptr。正如我们可以将一个派生类的普通指针转换成基类指针一样，我们也能把一个派生类的智能指针转换成基类的智能指针。make_shared\<Bulk_quote\>返回一个shared_ptr\<Bulk_quote\>对象，当我们调用push_back时该对象被转换成shared_ptr\<Quote\>。因此尽管在形式上有所差别，但实际上basket的所有元素类型都是相同的。
