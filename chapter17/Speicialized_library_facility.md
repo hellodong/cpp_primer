@@ -106,3 +106,43 @@ b = (origin < two_element>);        // 正确: b为 true
 
 - 由于tuple定义了< 和 == 运算符，我们可以将tuple序列传递给算法，并且可以在无序容器中将tuple作为关键字类型。
 
+#### 使用tuple返回多个值
+tuple的一个常见用途是从一个函数返回多个值。例如，我们的书店可能是多家连锁书店中的一家。每家书店都有一个销售记录文件，保存每本书近期的销售记录。我们可能希望在所有书店中查询某本书的销售情况。<br>
+假定每家书店都有一个销售记录文件。每个文件都将每本书的所有销售记录存放在一起。进一步假定已有一个函数可以读取这些销售记录文件，为每个书店创建一个vector\<Sales_data\>,并将这些vector保存在vector的vector中:
+```C++
+std::vector<std::vector<Sales_data>> files;
+```
+我们编写一个函数，对于一本给定的书，在files中搜索出售过这本书的书店。对每家有匹配销售记录的书店，我们将创建一个tuple来保存这家书店的索引和两个迭代器。索引指出了书店在file中的位置，而两个迭代器则标记了给定书籍在此书店的vecotr\<Sales_data\>中第一条销售记录和最后一条销售记录之后的位置。
+
+##### 返回tuple的函数
+我们首先编写查找给定书籍的函数。此函数的参数是刚刚提到的vector的vector以及一个表示书名的string。我们的函数将返回一个tuple的vector，凡是销售了给定书籍的书店，都在vector中有对应的一项:
+```C++
+typedef std::tuple<std::vector<Sales_data>::size_type, 
+                   std::vector<Sales_data>::const_iterator,
+                   std::vector<Sales_data>::const_iterator> Matches;
+
+std::vector<Matches> findBook(const std::vector<std::vector<Sales_data>> &files, const std::string &book)
+{
+    std::vector<Matches> ret; // 初始化为空vector
+    for (auto it = files.cbegin(); it != files.cend();it++)
+    {
+        auto found = equal_range(it->cbegin(), it->cend(), book,compareIsbn);
+        if (found.first != found.second)
+        {
+            ret.push_back(make_tuple(it - files.cbegin(), found.first, found.second));
+        }
+    }
+    return ret;
+}
+```
+for 循环遍历files中的元素，每个元素都是一个vector。在for循环内，我们调用一个名为equal_range的标准库算法，它的功能与关联容器的同名成员类似。equal_range的前两个实参是表示输入序列的迭代器，第三个参数是一个值。默认情况下，equal_range使用\运算符来比较元素。由于Sales_data没有\< 运算符，因此我们传递给它一个指向compareIsbn函数的指针。<br>
+equal_range算法返回一个迭代器pair,表示元素的范围。如果未找到book,则两个迭代器相等，表示空范围。
+
+### bitset类型
+标准库定义了**bitset**类，使得位运算符的使用更为容易，并且能够能够处理超过最长整型类型大小的位集合。bitset类定义在头文件bitset中。
+
+#### 定义和初始化bitset
+bitset类是一个类模板，它类似array类，具有固定的大小。当我们定义一个bitset时，需要声明它包含多少个二进制位:
+```C++
+std::bitset<32> bitvec(1U);  // 32位;低位为1, 其他位为0
+```
