@@ -146,3 +146,88 @@ bitset类是一个类模板，它类似array类，具有固定的大小。当我
 ```C++
 std::bitset<32> bitvec(1U);  // 32位;低位为1, 其他位为0
 ```
+大小必须是一个常量表达式。这条语句定义bitvec为一个包含32位的bitset。就像vector包含未命名的元素一样，bitset中的二进制位也是未命名的，我们通过位置来访问它们。二进制的位置是从0开始编号的。因此，bitvec包含编号从0到31的32个二进制位。编号从0开始的二进制位为**低位(low-order)**,编号到31结束的二进制位被称为**高位(high-order)**。
+
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;"> 初始化bitset的方法 </p></th>
+    </tr>
+    <tr>
+        <td>bitset<n> b;</td>
+        <td>b有n位；每一位均为0.此构造函数是一个constexpr</td>
+    </tr>
+    <tr>
+        <td>bitset<n> b(u);</td>
+        <td>b是unsigned long long 值u的低n位拷贝。<br>
+            if n > unsigned long long的大小，<br>
+            则b中超出unsigned long long的高位置0。<br>
+            此构造函数是一个constexpr</td>
+    </tr>
+    <tr>
+        <td>bitset<n> b(s, pos, m, zero, one)</td>
+        <td>b是string s从位置pos开始m个字符的拷贝。<br>
+            s只能包含字符zero或one;如果包含任何其他字符，<br>
+            构造函数会抛出invalid_argument异常。<br>
+            字符在b中分别保存为zero和one。<br>
+            pos默认为0，m默认为string::npos,<br>
+            zero默认为'0', one默认为'1'</td>
+    </tr>
+    <tr>
+        <td>bitset<n> b(cp, pos, m, zero, one)</td>
+        <td>与上一个构造函数相同，但从cp指向的字符数组中拷贝字符。</td>
+    </tr>
+</table>
+
+##### 用unsigned值初始化bitset
+我们使用一个整型值来初始化bitset时，此值将被转换为unsigned long long类型并被当作位模式处理。bitse中二进制位将是此模式的一个副本。如果bitset的大小\>一个unsigned long long中的二进制位数，则剩余高位被置为0。如果bitset的大小\<一个unsigned long long 中的二进制位数，则只使用给定值中的低位，超出bitset大小的高位被丢弃：
+```C++
+// bitvec1比初始值小;初始值中的高位被丢弃
+bitset<13> bitvec1(0xbeef);
+// bitvec2比初始值大；它的高位被置为0
+bitset<20> bitvec2(0xbeef);
+bitset<128> bitvec3(~0ULL);
+```
+
+##### 从一个string初始化bitset
+我们可以从一个string或一个字符数组指针来初始化bitset。两种情况下，字符都直接表示位模式。与往常一样，当我们使用字符串表示数时，字符串中下标最小的字符对应高位，反之亦然：
+```C++
+bitset<32> bitvec4("1100"); // 2、3两位为1，剩余两位为0
+```
+如果string包含的字符数比bitset少，则bitset的高位被置为0。<br>
+我们不必使用整个string来作为bitset的初始值，可以只用一个字串作为初始值:
+```C++
+string str("1111111111110000000011001101");
+bitset<32> bitvec5(str, 5,4); // 从str[5] 开始的4个二进制位
+bitset<32> bitvec6(str, str.size() - 4); // 使用最后四个字符
+```
+#### bitset操作
+bitset操作定义了多种检测或设置一个或多个二进制位的方法。bitset类还支持位运算符。
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;"> bitset操作 </p></th>
+    </tr>
+    <tr> 
+        <td>b.any()</td>
+        <td>b中是否存在置位二进制位</td>
+    </tr>
+    <tr> 
+        <td>b.all()</td>
+        <td>b中所有位都置位了吗</td>
+    </tr>
+    <tr> 
+        <td>b.none()</td>
+        <td>b中不存在置位的二进制位</td>
+    </tr>
+    <tr> 
+        <td>b.count()</td>
+        <td>b中置位的位数</td>
+    </tr>
+    <tr> 
+        <td>b.count()</td>
+        <td>b中置位的位数</td>
+    </tr>
+    <tr> 
+        <td>b.size()</td>
+        <td>constexpr函数，返回b中的位数</td>
+    </tr>
+</table>
