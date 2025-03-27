@@ -342,3 +342,72 @@ quizB.set(27);
 status = quizB[27];
 quizB.reset(27);
 ``` 
+
+### 正则表达式
+**正则表达式(regular expression)** 是一种描述字符序列的方法，是一种极其强大的计算工具。重点介绍如何使用C++正则表达式库(RE库)，它是C++11标准库的一部分。RE库定义在头文件regex中，包含多个组件。
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;"> 正则表达式库组件 </p></th>
+    </tr>
+    <tr> 
+        <td>regex</td>
+        <td>表示一个正则表达式的类</td>
+    </tr>
+    <tr> 
+        <td>regex_match</td>
+        <td>将一个字符序列与一个正则表达式匹配</td>
+    </tr>
+    <tr> 
+        <td>regex_search</td>
+        <td>寻找第一个与正则表达式匹配的子序列</td>
+    </tr>
+    <tr> 
+        <td>regex_replace</td>
+        <td>使用给定格式替换一个正则表达式</td>
+    </tr>
+    <tr> 
+        <td>sregex_iterator</td>
+        <td>迭代器适配器，调用regex_search遍历一个string中所有匹配的子串</td>
+    </tr>
+    <tr> 
+        <td>smatch</td>
+        <td>容器类，保存在string中搜索的结果</td>
+    </tr>
+    <tr> 
+        <td>ssub_match</td>
+        <td>string中匹配的子表达式的结果</td>
+    </tr>
+</table>
+
+regex 类表示一个正则表达式。除了初始化和赋值之外，regex还支持其他一些操作。<br>
+函数regex_match和regex_search确定一个给定字符序列和一个给定regex是否匹配。如果整个整个输入序列与表达式匹配，则regex_match函数返回true;如果输入序列中一个子串与表达式匹配，则regex_search函数返回true。还有一个regex_replace函数。<br>
+下标列出了regex的函数参数。这些函数都返回bool值，且都被重载了: 其中一个版本接受一个类型为smatch的附件参数。如果匹配成功，这些函数将成功匹配的相关信息保存在给定的smatch对象中。
+```C++
+                regex_search和regex_match的参数
+
+(seq, m, r, mft)        在字符序列seq中查找regex对象r中的正则表达式。    
+(seq, r, mft)           seq可以是一个string、表示范围的一对迭代器以及一个指向空
+                        字符结尾的字符数组指针
+                        m是一个match对象，用来保存匹配结果的相关细节。m和seq必须具有兼容类型
+                        mft是一个可选的regex_constants::match_flag_tpe值
+```
+#### 使用正则表达式库
+我们从一个非常简单例子开始:
+```C++
+string pattern("[^c]ei");
+pattern = "[[:alpha:]]*" + pattern + "[[:alpha:]]*";
+regex r(pattern);               
+smatch rets;
+string test_str = "receipt freind theif receive";
+if (regex_search(test_str, results, r))
+{
+    std::cout << rets.str() << std::endl; 
+}
+```
+我们定义一个string来保存希望查找的正则表达式。正则表达式[^c]表明我们希望匹配任意不是'c'的字符，而[^c]ei指出我们想要匹配这种字符后接ei的字符串。此模式描述的字符串恰好包含三个字符。我们想要包含此模式的单词的完整内容。<br>
+这个正则表达式包含零个或多个字母后接我们的三字母模式，然后再接零个或多个额外字母。默认情况下，regex使用的正则表达式语言是ECMAScript。在ECMAScript中，模式[[:alpha:]] 匹配任意字母，符合+和*分别表示我们希望"零个，一个或多个”匹配。<br>
+将正则表达式存入pattern后，我们用它来初始化一个名为r的regex对象。接下来我们定义一个string，用来测试正则表达式。我们将test_str初始化为与模式匹配的单词和不匹配的单词。我们还定义了一个名为rets和smatch对象，它将被传递给regex_search。如果找到匹配字串，rets将会保存匹配位置的细节信息。<br>
+接下来我们调用了regex_search。如果它找到匹配字串，就返回true。我们用resultes的str成员打印test_str中与模式匹配的部分。函数regex_search在输入序列中只要找到一个匹配字串就会停止查找。因此，程序的输出将是
+```C++
+freind
+```
