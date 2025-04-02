@@ -411,3 +411,184 @@ if (regex_search(test_str, results, r))
 ```C++
 freind
 ```
+
+##### 指定regex对象的选项
+当我们定义一个regex或是对一个regex调用assign为其赋值时，可以指定一些标志来影响regex如何操作。默认情况下ECMAScript标志被设置，从而regex会使用ECMA-262规范，这也是很多web浏览器所使用的正则表达式语言。
+
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">regex选项</p> </th>
+    </tr>
+    <tr>
+        <td>regex r(re)<br>regex r(re,f)</td>
+        <td>re 表示一个正则表达式，可以是一个string、一个表示字符范围的迭代器对、<br>一个指向空字符结尾的字符数组指针、一个字符指针和一个计数器<br>或是一个花括号包围的字符列表。f是指出对象如何处理的标志。f通过下面列出的值来设置。<br>如未指定f,其默认为ECMAScript
+        </td>
+    </tr>
+    <tr>
+        <td>r1 = re</td>
+        <td>将r1中的正则表达式替换为re。re表示一个正则表达式，<br>可以是另一个regex对象、一个string、一个指向空字符结尾的字符数组指针<br>或是一个花括号包围的字符列表</td>
+    </tr>
+    <tr>
+        <td>r1.assign(re,f)</td>
+        <td>与使用赋值运算符(=)效果相同</td>
+    </tr>
+    <tr>
+        <td>r.mark_count()</td>
+        <td>r中子表达式的数目</td>
+    </tr>
+    <tr>
+        <td>r.flags()</td>
+        <td>返回r的标志集</td>
+    </tr>
+    <tr>
+        <th colspan="2">构造函数和赋值操作可能抛出类型为regex_error的异常</th>
+    </tr>
+    <th colspan="2"> <p style="text-align:center;"> 定义regex时指定的标志 </p> </th>
+    <tr>
+        <td>icase</td>
+        <td>忽略大小写</td>
+    </tr>
+    <tr>
+        <td>nosubs</td>
+        <td>不保存匹配的子表达式</td>
+    </tr>
+    <tr>
+        <td>optimize</td>
+        <td>执行速度优于构造速度</td>
+    </tr>
+    <tr>
+        <td>ECMAScript</td>
+        <td>使用ECMA-262语法</td>
+    </tr>
+    <tr>
+        <td>basic</td>
+        <td>使用POSIX基本的正则表达式</td>
+    </tr>
+    <tr>
+        <td>extended</td>
+        <td>使用POSIX扩展的正则表达式</td>
+    </tr>
+    <tr>
+        <td>awk</td>
+        <td>使用POSIX版本的awk语法</td>
+    </tr>
+    <tr>
+        <td>grep</td>
+        <td>使用POSIX版本的grep语法</td>
+    </tr>
+    <tr>
+        <td>egrep</td>
+        <td>使用POSIX版本的egrep语法</td>
+    </tr>
+</table>
+
+作为一个例子，我们可以用icase标志查找具有特定扩展名的文件名。大多数操作系统都是按大小写无关的方式识别扩展名。
+```C++
+// 一个或多个字母或数字字符后接一个‘.’再接“cpp” 或“cxx”或“cc”
+regex r("[[:alnum:]]+\\.(cpp|cxx|cc)", regex::icase);
+smatch resultes;
+string filename;
+while(std::cin >> filename)
+{
+    if (regex_search(filename, resultes, r))
+    {
+        std::cout << resultes.str() << std::endl; 
+    }
+}
+```
+
+##### 使用正则表达式时的错误
+正则表达式是在运行时，当一个regex对象被初始化或被赋予一个新模式时，才被编译的。我们用这种语言编写的正则表达式也可能有错误。
+
+- 一个正则表达式的语法是否正确是在运行时解析的
+
+如果我们编写的正则表达式存在错误，则在运行时标准库会抛出一个类型为**regex_error**的异常。regex_error有一个what函数描述发生了 什么错误。regex_error还有一个名为code()函数，返回某个错误类型对应的数值编码。
+
+```C++
+try{
+    regex r("[[:alnum:]+\\.(cpp|cxx|cc)", regex::icase);
+}catch(regex_error e) 
+{
+    std::cout <<e.what() << "\r\nCode:" << e.code() << std::endl;
+}
+```
+
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">正则表达式错误类型</p> </th>
+    </tr>
+    <tr>
+        <td>error_collate</td>
+        <td>无效元素校对</td>
+    </tr>
+    <tr>
+        <td>error_ctype</td>
+        <td>无效字符</td>
+    </tr>
+    <tr>
+        <td>error_escape</td>
+        <td>无效转义字符或无效尾置转义</td>
+    </tr>
+    <tr>
+        <td>error_complexity</td>
+        <td>匹配过于复杂</td>
+    </tr>
+    <tr>
+        <td>error_stack</td>
+        <td>栈空间不足，无法处理匹配</td>
+    </tr>
+</table>
+
+##### 正则表达式类和输入序列类型
+我们可以搜索多种类型的输入序列。输入可以是普通char数据或wchar_t数据，字符可以保存在标准库string中或是char数组中(宽字符版本，wstring或wchar_t数组中)。RE为这些不同的输入序列类型都定义了对应的类型。<br>
+regex类保存类型char的正则表达式。标准库还定义了一个wregex类保存类型wchar_t，其操作与regex完全相同。两者唯一差别是wregex的初始值须使用wchar_t而不是char。<br>
+
+- smatch 表示string类型的输入类型
+- cmatch 表示字符数组序列
+- wsmatch 表示宽字符串(wstring)输入
+- wcmatch 表示宽字符数组
+
+我们使用的RE库类型必须与输入序列类型匹配，例如:
+```C++
+regex r("[[:alnum;]]+\\.(cpp|cxx|cc$)", regex::icase);
+smatch results; // 将匹配string输入序列，而不是char *
+if (regex_search("regexbase.cpp", results, r)) // 错误：输入为char*
+{
+    std::cout << results.str() << std::endl;
+}
+```
+上面代码会编译失败，因为match参数的类型与输入序列的类型不匹配。如果我们希望搜索一个字符数组，就必须使用cmatch对象：
+```C++
+regex r("[[:alnum;]]+\\.(cpp|cxx|cc$)", regex::icase);
+cmatch results; // 将匹配输入字符数组输入序列
+if (regex_search("regexbase.cpp", results, r))
+{
+    std::cout << results.str() << std::endl;
+}
+```
+
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">正则表达式库类</p> </th>
+    </tr>
+    <tr>
+        <td>输入序列类型</td>
+        <td>使用正则表达式类</td>
+    </tr>
+    <tr>
+        <td>string</td>
+        <td>regex、smatch、ssub_match和sregex_iterator</td>
+    </tr>
+    <tr>
+        <td>const char *</td>
+        <td>regex、cmatch、csub_match和cregex_iterator</td>
+    </tr>
+    <tr>
+        <td>wstring</td>
+        <td>wregex、wsmatch、wssub_match和wsregex_iterator</td>
+    </tr>
+    <tr>
+        <td>const wchar_t</td>
+        <td>wregex、wcmatch、wcsub_match和wcregex_iterator</td>
+    </tr>
+</table>
