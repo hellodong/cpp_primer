@@ -22,9 +22,11 @@ endif()
 endif()
 
 add_executable(${PROJECT_NAME} src/regex_base_main.cpp)
+add_executable(regex_it src/regex_iterator_main.cpp)
 
 #target_compile_features(${PROJECT_NAME} PUBLIC cxx_auto_type)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_constexpr)
+target_compile_features(regex_it PUBLIC cxx_constexpr)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
