@@ -592,3 +592,33 @@ if (regex_search("regexbase.cpp", results, r))
         <td>wregex、wcmatch、wcsub_match和wcregex_iterator</td>
     </tr>
 </table>
+
+#### 匹配Regix迭代器类型
+我们使用sregex_iterator获得所有匹配。 假定名为str的std::string保存了我们要搜索的输入文件的全部内容， 使用一个sregex_iterator进行搜索:
+```C++
+    std::string pattern("[^c]ei");
+    pattern = "[[:alpha:]]*" + pattern + "[[:alpha:]]*";
+    std::regex r(pattern, std::regex::icase);
+    for (std::sregex_iterator it(str.begin(), str.end(), r), end_it; it != end_it;it++)
+    {
+        std::cout <<  it->str() << std::endl;
+    }
+```
+当我们解引用迭代器时，会得到一个表示当前匹配结果的smatch对象，调用它的str成员打印匹配的单词。<br>我们还可以知道获得匹配的上下文，匹配类型有两个名为prefix和suffix成员，分别返回输入序列中当前匹配之前和之后部分的ssub_match对象，我们可以用这些操作重写语法程序循环:
+```C++
+ for (std::sregex_iterator it(str.begin(), str.end(), r), end_it; it != end_it;it++)
+    {
+        std::cout <<it->prefix().str() << "\t\t" << it->str() << "\t\t" << it->suffix().str() << std::endl;
+    }
+```
+
+#### 使用子表达式
+正则表达式中的模式通常包含一个或多个**子表达式**。一个子表达式是模式的一部分，本身也具有意义。正则表达式语法通常用括号表示子表达式。如下所示:
+```C++
+std::regex r ("([[:alnum:]]+)\\.(cpp|cxx|cc)$", std::regex::icase);
+if (std::regex_search(filename, results, r))
+{
+    std::cout << results.str(1) << std::endl;
+}
+```
+打印的是str(1), 即第一个子表达式匹配的部分。子匹配是按位置来访问的。第一子匹配位置为0，表示整个模式对应的匹配，随后是每个子表达式对应的匹配。

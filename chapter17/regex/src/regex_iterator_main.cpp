@@ -12,7 +12,7 @@ void regex_it_str(const std::string &str)
     std::regex r(pattern, std::regex::icase);
     for (std::sregex_iterator it(str.begin(), str.end(), r), end_it; it != end_it;it++)
     {
-        std::cout << it->str() << std::endl;
+        std::cout << it->prefix().str() << "\t\t" << it->str() << "\t\t" << it->suffix().str().substr(0, 10)  << std::endl;
     }
 
 }
