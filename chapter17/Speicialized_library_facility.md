@@ -622,3 +622,47 @@ if (std::regex_search(filename, results, r))
 }
 ```
 打印的是str(1), 即第一个子表达式匹配的部分。子匹配是按位置来访问的。第一子匹配位置为0，表示整个模式对应的匹配，随后是每个子表达式对应的匹配。
+
+### 随机数
+C++11 定义在头文件random中的随机数库通过一组协作的类：**随机数引擎类(random-number engines)**和**随机数分布类(random-number distribution)**。一个引擎类可以生成unsigned随机数序列，一个分布类使用一个引擎类生成指定类、在给定范围内、服从特定概率分布的随机数。
+
+#### 随机数引擎和分布
+我们调用一个随机数引擎对象生成原始随机数：
+```C++
+default_random_engine e;
+for (size_t idx = 0;idx < 10;i++)
+{
+    std::cout << e() << " "; 
+}
+```
+我们定义了名为e的**default_random_engine**对象。在for循环内，我们调用对象e获得下一个随机数。下标列出了随机数引擎操作:
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;"> 随机数引擎操作 </p></th>
+    </tr>
+    <tr> 
+        <td>Engine e</td>
+        <td>默认构造函数：使用该引擎默认的种子</td>
+    </tr>
+    <tr> 
+        <td>Engine e(s)</td>
+        <td>使用种子s为种子</td>
+    </tr>
+    <tr> 
+        <td>e.seed(s)</td>
+        <td>使用种子s重置引擎状态</td>
+    </tr>
+    <tr> 
+        <td>e.min()<br>e.max()</td>
+        <td>此引擎可生成的最小最大值</td>
+    </tr>
+    <tr> 
+        <td>Engine::result_type</td>
+        <td>此引擎生成的unsigned整型类型</td>
+    </tr>
+    <tr> 
+        <td>e.discard(u)</td>
+        <td>将引擎推进u步:u的类型为unsigned long long</td>
+    </tr>
+</table>
+对于大多数场合，随机数引擎的输出是不能直接使用的。问题出在生成的随机数的值的范围通常与我们需要的不符合，而正确的转换随机数的范围是极其困难的。

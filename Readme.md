@@ -23,6 +23,6 @@
 [Object orinted program](./chapter15/Object-orinted_program.md)
 
 ## Chapter16 Template and Generic Programming
-[Template and generic programming][./chapter16/template_and_generic_programming.md]
+[Template and generic programming](./chapter16/template_and_generic_programming.md)
 
 
