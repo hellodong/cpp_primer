@@ -624,7 +624,7 @@ if (std::regex_search(filename, results, r))
 打印的是str(1), 即第一个子表达式匹配的部分。子匹配是按位置来访问的。第一子匹配位置为0，表示整个模式对应的匹配，随后是每个子表达式对应的匹配。
 
 ### 随机数
-C++11 定义在头文件random中的随机数库通过一组协作的类：**随机数引擎类(random-number engines)**和**随机数分布类(random-number distribution)**。一个引擎类可以生成unsigned随机数序列，一个分布类使用一个引擎类生成指定类、在给定范围内、服从特定概率分布的随机数。
+C++11 定义在头文件*random*中的随机数库通过一组协作的类：**随机数引擎类(random-number engines)**和**随机数分布类(random-number distribution)**。一个引擎类可以生成unsigned随机数序列，一个分布类使用一个引擎类生成指定类、在给定范围内、服从特定概率分布的随机数。
 
 #### 随机数引擎和分布
 我们调用一个随机数引擎对象生成原始随机数：
@@ -666,3 +666,60 @@ for (size_t idx = 0;idx < 10;i++)
     </tr>
 </table>
 对于大多数场合，随机数引擎的输出是不能直接使用的。问题出在生成的随机数的值的范围通常与我们需要的不符合，而正确的转换随机数的范围是极其困难的。
+
+##### 分布类型和引擎
+得到一个指定范围内的数，我们使用一个分布类型对象:
+```C++
+std::uniform_int_distribution<unsigned> u(0,9);
+std::default_random_engine e;   // 生成无符号随机整数
+for (size_t i = 0;i < 10; i++)
+{
+    std::cout << u(e) << " ";
+}
+```
+std::uniform_int_distribution\<unsigned\>。此类型生成均匀分布的unsigned 值。在此程序中，u(0,9)表示我们希望得到0 到 9 之间(闭合)的数。分布类型也是函数对象类。分布类型定义了一个调用运算符，它接受一个随机数引擎作为参数，并将其映射到指定的分布。
+
+##### 引擎生成一个数值序列
+随机数发生器有一个特性经常会使得新手迷惑：即使生成的数看起来是随机的，但对一个给定的发生器，每次运行程序它都会返回相同的数值序列。序列不变这一事实在调试时非常有用。<br>
+作为一个例子，假定我们需要一个函数生成一个vector，包含100个均匀分布在0到9之间的随机数。我们可能认为应该这样编写函数:
+```C++
+// 几乎肯定是生成随机整数vector的错误方法
+// 每次调用这个函数都会生成相同的100个数
+vector<unsigned> bad_randvec()
+{
+    std::default_random_engine e;
+    std::uniform_int_distribution<unsigned> u(0,9);
+    std::vector<unsigned> ret;
+    for (size_t idx = 0;idx < 100; i++)
+    {
+        ret.push_back(u(e));
+    }
+    return ret;
+}
+```
+每次调用都会返回相同的vector。编写此函数的正确方法是将引擎和关联的分布对象定义为static的:
+```C++
+vector<unsigned> bad_randvec()
+{
+    static std::default_random_engine e;
+    static std::uniform_int_distribution<unsigned> u(0,9);
+    std::vector<unsigned> ret;
+    for (size_t idx = 0;idx < 100; i++)
+    {
+        ret.push_back(u(e));
+    }
+    return ret;
+}
+```
+e和u是static的，因此它们在函数调用之间会保持住状态。第一调用使用前100个随机数，第二次调用获得接下来100个，依此类推。
+
+##### 设置随机数发生器种子
+随机数发生器会生成相同的随机数序列这一特性在调试中很有用。但是，一旦我们程序调试完毕，我们通常希望每次运行程序都会生成不同的随机结果，可以通过一个**种子**(seed)达到这一目的。种子就是一个数值，引擎可以利用它从序列中一个新位置重新开始随机数。<br>
+引擎设置种子有两种方式:在创建引擎对象时提供种子，或调用引擎的seed成员:
+```C++
+std::default_random_engine e1;          // 使用默认种子
+std::default_random_engine e2(0xbeef);  // 使用给定种子值
+std::default_random_engine e3;
+e3.seed(0xdead);                        // 将种子值设置为0xdead
+```
+
