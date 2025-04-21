@@ -723,3 +723,51 @@ std::default_random_engine e3;
 e3.seed(0xdead);                        // 将种子值设置为0xdead
 ```
 
+#### 其他随机数分布
+随机数引擎生成unsigned数，范围内的每个数生成的概率是相同的。而应用程序需要不同类型或不同分布的随机数。
+
+##### 生成随机实数
+使用C++11标准，很容易获得随机浮点数。我们可以定义一个uniform_real_distribution 类型对象，让标准库处理随机整数到随机浮点数映射。与处理uniform_int_distribution一样，在定义对象时，我们指定最小值与最大值:
+```C++
+std::default_random_engine e;
+std::uniform_real_distribution<double> u(0,1);
+for (size_t i=0;i < 10; i++)
+{
+    std::cout << u(e) << " ";
+}
+```
+这段代码与之前生成unsigned值程序几乎相同，但是使用了一个不同的分布类型，此版本会生成不同结果。
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;"> 分布类型操作 </p></th>
+    </tr>
+    <tr>
+        <td>Dist d;</td>
+        <td>默认构造函数：使d准备好被使用</td>
+    </tr>
+    <tr>
+        <td>d(e)</td>
+        <td>用相同的e连续调用d的话，会根据d的分布类型生成一个随机数序列:<br>
+         e是一个随机数引擎对象</td>
+    </tr>
+    <tr>
+        <td>d.min()<br>d.max()</td>
+        <td>返回d(e)能生成的最小值和最大值</td>
+    </tr>
+    <tr>
+        <td>d.reset()</td>
+        <td>重建d的状态，使得随后对d的使用不依赖于d已经生成的值</td>
+    </tr>
+</table>
+
+##### 生成非均匀分布的随机数
+除了正确生成的指定范围内的数之外，C++11标准库另一个优势是可以生成非均匀分布的随机数。作为一个例子，我们将生成一个正态分布的值的序列。
+```C++
+std::default_random_engine e;       
+std::normal_distribution<> n(4, 1.5);   //均值4. 标准差1.5
+for (size_t idx = 0;idx < 20; idx++)
+{
+    std::cout << "[" << idx << "]:" << n(e) << " ";
+}
+std::cout << std::endl;
+```
