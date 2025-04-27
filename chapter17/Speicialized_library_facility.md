@@ -771,3 +771,92 @@ for (size_t idx = 0;idx < 20; idx++)
 }
 std::cout << std::endl;
 ```
+
+### IO库再探
+在本节中，我们将介绍三个更特殊的IO库特性：格式控制、未格式化IO和随机访问。
+
+#### 格式化输入输出
+每个iostream对象维护一个格式状态控制IO如何格式化细节。格式状态控制格式化的某些方面，如整型值是几进制、浮点值的精度、一个输出元素的宽度等。<br>
+标准库定义了一组**操纵符**(manipulator)修改流的格式状态。我们已经在程序中使用过一个操作符---- endl, 它输出一个换行符并刷新缓冲区。
+
+##### 控制布尔值的格式
+操纵符改变对象的格式状态的一个例子就是boolalpha操纵符。默认情况下，bool值打印1或0。一个true值输出为整数1，而false输出0。我们可以对流使用boolalpha操纵符覆盖这种格式：
+```C++
+std::cout << "default bool values: " << true << " " << false << std::endl;
+std::cout << "alpha bool values: " << std::boolalpha << true << " " << false << std::endl; 
+```
+一旦向cout 输入 boolalpha, 我们就改变了cout打印bool值的方式。后续打印bool值的操作都会打印true或false而非1或0。取消cout格式状态的改变，我们使用noboolalpha:
+```C++
+bool bool_val = get_status();
+std::cout << std::boolalpha << bool_val << std::noboolalpha; 
+```
+我们改变了bool值的格式，但只对bool_val的输出有效。一旦完成此值的打印，我们立即将流恢复到初始状态。
+
+##### 指定整型值的进制
+默认情况下，整型值的输入输出使用十进制。我们可以使用操纵符hex、oct和dec将其改为十六进制、八进制或改回十进制：
+```C++
+std::cout << "default: " << 20 << " "<< 1024<< std::endl;
+std::cout << "octal: " << std::oct << 20 << " " << 1024 << std::endl; 
+std::cout << "hex:" << std::hex << 20 << " " << 1024 << std::endl;
+std::cout << "decimal:" << std::dec << 20 << " " << 1024 << std::endl;
+```
+类似boolalpha, 这些操纵符也会改变格式状态。它们会影响下一个和随后所有的整型输出，直至另一个操纵符改变了格式为止。
+
+##### 在输出中指出进制
+如果需要打印八进制或十六进制，应该使用showbase操作符。当对流应用showbase操纵符时，会在输出结果中显示进制，它遵循与整型常量中指定进制相同的规范:
+- 前导0x表示十六进制
+- 前导0表示八进制
+- 无前导字符串表示十进制
+
+我们使用showbase修改前一个程序:
+```C++
+std::cout << std::showbase;  // 打印整型值显示进制
+std::cout << "default: " << 20 << " "<< 1024<< std::endl;
+std::cout << "octal: " << std::oct << 20 << " " << 1024 << std::endl; 
+std::cout << "hex:" << std::hex << 20 << " " << 1024 << std::endl;
+std::cout << "decimal:" << std::dec << 20 << " " << 1024 << std::endl;
+std::cout << std::noshowbase; // 恢复流状态
+```
+操纵符noshowbase恢复cout的状态，从而不再显示整型值的进制。
+
+##### 控制浮点数格式
+我们可以控制浮点数输出三种格式:
+- 以多高精度(多少个数字)打印浮点数
+- 数值是打印为十六进制、定点十进制还是科学计数法形式
+- 对于没有小数部分的浮点值是否打印小数点
+
+默认情况下，浮点值按六位数字精度打印；如果浮点值没有小数部分，则不打印小数点；根据浮点数的值选择打印成定点十进制或科学计数法形式。
+
+##### 指定打印精度
+默认情况下，精度会控制打印的数字的总数。当打印时，浮点值按当前精度舍入而非截断。因此，如果当前为四位数字，则3.141592将打印为3.142, 如果精度为三位数字，则打印为3.14。<br>
+我们可以通过调用IO对象的precision成员或setprecision操纵符改变精度。
+```C++
+    std::cout << "precision: " << std::cout.precision() << ", value: " << sqrt(2.0) << std::endl;
+    std::cout.precision(12);
+    std::cout << "precision: " << std::cout.precision() << ", value: " << sqrt(2.0) << std::endl;
+    std::cout << std::setprecision(4);
+    std::cout <<"precision: " << std::cout.precision() << ", value:" << sqrt(2.0) << std::endl;
+```
+sqrt函数是重载的，不同版本分别接受一个float、double或long double参数，返回实参的平方根。
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">定义在iostream中的操纵符</p></th>
+    </tr>
+    <tr>
+        <td>boolalpha</td>
+        <td>将true和false输出为字符串</td>
+    </tr>
+    <tr>
+        <td>noboolalpha</td>
+        <td>将true和false输出为1,0</td>
+    </tr>
+    <tr>
+        <td>showbase</td>
+        <td>对整型输出表示进制的前缀</td>
+    </tr>
+    <tr>
+        <td>noshowbase</td>
+        <td>不生成表示进制的前缀</td>
+    </tr>
+</table>
+
