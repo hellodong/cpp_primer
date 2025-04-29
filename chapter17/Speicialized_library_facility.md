@@ -858,5 +858,170 @@ sqrt函数是重载的，不同版本分别接受一个float、double或long dou
         <td>noshowbase</td>
         <td>不生成表示进制的前缀</td>
     </tr>
+    <tr>
+        <td>showpoint</td>
+        <td>对浮点数总是显示小数点</td>
+    </tr>
+    <tr>
+        <td>noshowpoint</td>
+        <td>只有当浮点值包含小数部分时才显示小数点</td>
+    </tr>
+    <tr>
+        <td>showpos</td>
+        <td>对非负数显示+</td>
+    </tr>
+    <tr>
+        <td>noshowpos</td>
+        <td>对非负数不显示+</td>
+    </tr>
+    <tr>
+        <td>uppercase</td>
+        <td>在十六进制中打印0X,科学计数法打印E</td>
+    </tr>
+    <tr>
+        <td>nouppercase</td>
+        <td>在十六进制中打印0x,科学计数法打印e</td>
+    </tr>
+    <tr>
+        <td>dec</td>
+        <td>整型值显示为十进制</td>
+    </tr>
+    <tr>
+        <td>hex</td>
+        <td>整型值显示为十六进制</td>
+    </tr>
+    <tr>
+        <td>oct</td>
+        <td>整型值显示为八进制</td>
+    </tr>
+    <tr>
+        <td>left</td>
+        <td>在值的右侧添加填充字符</td>
+    </tr>
+    <tr>
+        <td>right</td>
+        <td>在值的左侧添加填充字符</td>
+    </tr>
+    <tr>
+        <td>internal</td>
+        <td>在符号和值之间添加填充符</td>
+    </tr>
+    <tr>
+        <td>fixed</td>
+        <td>浮点值显示为定点十进制</td>
+    </tr>
+    <tr>
+        <td>scientific</td>
+        <td>浮点值显示为科学计数法</td>
+    </tr>
+    <tr>
+        <td>hexfloat</td>
+        <td>浮点值显示为十六进制C++11特性</td>
+    </tr>
+    <tr>
+        <td>defaultfloat</td>
+        <td>重置浮点数格式为十进制C++11特性</td>
+    </tr>
+    <tr>
+        <td>unitbuf</td>
+        <td>每次输出操作后都刷新缓冲区</td>
+    </tr>
+    <tr>
+        <td>nounitbuf</td>
+        <td>恢复正常的缓冲区刷新方式</td>
+    </tr>
+    <tr>
+        <td>skipws</td>
+        <td>输入运算符跳过空白符</td>
+    </tr>
+    <tr>
+        <td>noskipws</td>
+        <td>输入运算符不跳过空白符</td>
+    </tr>
+    <tr>
+        <td>flush</td>
+        <td>刷新ostream缓冲区</td>
+    </tr>
+    <tr>
+        <td>ends</td>
+        <td>插入空字符，刷新ostream缓冲区</td>
+    </tr>
+    <tr>
+        <td>endl</td>
+        <td>插入换行，刷新ostream缓冲区</td>
+    </tr>
 </table>
+
+##### 指定浮点数计数法
+操纵符scientific改变流的状态使用科学计数法。操纵符fixed改变流的状态使用定点十进制。在C++11中，使用hexfloat也可以强制浮点数使用十六进制格式，还提供另外一个名为defaultfloat的操纵符，将流恢复到默认状态。<br>
+在执行scientific、fixed或hexfloat后，精度值控制的是小数点后面的数字位数，而默认情况下精度值指定的是数字的总位数。
+
+##### 打印小数点
+默认情况下，当一个浮点数的小数部分为0时，不显示小数点。showpoint操纵符强制打印小数点:
+```C++
+std::cout << 10.0 << std::endl; 
+std::cout << std::showpoint << 10.0 << std::endl << std::noshowpoint; 
+```
+操纵符noshowpoint恢复默认行为。
+
+##### 输出补白
+当按列打印数据时，我们常常需要非常精细地控制数据格式。标准库提供了一些操纵符帮助我们完成所需控制:
+- setw指定下一个数字或字符串值地最小空间
+- left表示左对齐输出
+- right表示右对齐输出
+- internal控制负数地符号位置，它左对齐符号，右对齐值，用空格填满所有中间空间
+- setfill允许指定一个字符替代默认地空格来补充输出
+
+下面展示了如何使用这些操纵符:
+```C++
+int i = -16;
+double d= 3.1415926;
+
+std::cout << "i: " << std::setw(12) << i << "next col" << '\n'
+          << "d: " << std::setw(12) << d << "next col" << '\n';
+
+std::cout << std::left << "i: " << std::setw(12) << i << "next col" << '\n'
+          << "d: " <<std::setw(12) << d <<"next col" << '\n';
+
+std::cout << std::right << "i: " <<std::setw(12) << i <<"next col" << '\n'
+          << "d: " << std::setw(12) << d << "next col" << '\n';
+
+std::cout << std::internal << "i: " <<std::setw(12) << i <<"next col" << '\n'
+          << "d: " << std::setw(12) << d << "next col" << '\n';
+
+std::cout << std::setfill('#') << "i: " <<std::setw(12) << i <<"next col" << '\n'
+          << "d: " << std::setw(12) << d << "next col" << '\n';
+
+```
+
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">定义在iomanip中的操纵符</p></th>
+    </tr>
+    <tr>
+        <td>setfill(ch)</td>
+        <td>用ch填充空白</td>
+    </tr>
+    <tr>
+        <td>setprecision(n)</td>
+        <td>将浮点精度设置n</td>
+    </tr>
+    <tr>
+        <td>setw(w)</td>
+        <td>读或写地值宽度为w个字符</td>
+    </tr>
+    <tr>
+        <td>setbase(b)</td>
+        <td>将整数输出为b进制</td>
+    </tr>
+</table>
+
+##### 控制输入格式
+默认情况下，输入运算符会忽略空白符(空格、制表、换行、回车)。操纵符noskipws会令输入运算符读取空白符，而不是跳过它们。为了恢复默认行为，我们可以使用skipws操纵符：
+```C++
+std::cin >> noskipws;
+while(std::cin >> ch)
+    std::cout << ch;
+std::cin >> skipws;
+```
 
