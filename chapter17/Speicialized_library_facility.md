@@ -1025,3 +1025,49 @@ while(std::cin >> ch)
 std::cin >> skipws;
 ```
 
+#### 未格式化的输入输出操作
+标准库还提供了一组低层操作，支持未格式化IO(unformatted IO)。这些操作允许我们将一个流当作一个无解释的字节序列来处理。<br>
+
+##### 单字节操作
+我们可以使用未格式化IO操作get和put来读取和写入一个字符:
+```C++
+char ch;
+while (std::cin.get(ch))
+    std::cout.put(ch);
+```
+此程序保留了输入中的空白字符，输入与输出完全相同。它的执行过程与前一个使用noskipws的程序完全相同。
+
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">单字节低层IO操作</p></th>
+    </tr>
+    <tr>
+        <td>is.get(ch)</td>
+        <td>从istream is 读取下一个字节存入字符ch中。返回is</td>
+    </tr>
+    <tr>
+        <td>os.put(ch)</td>
+        <td>将字符ch输出到ostream os。返回os</td>
+    </tr>
+    <tr>
+        <td>is.get()</td>
+        <td>将is的下一个字节作为int返回</td>
+    </tr>
+    <tr>
+        <td>is.putback(ch)</td>
+        <td>将字符ch放回is。返回is</td>
+    </tr>
+    <tr>
+        <td>is.unget()</td>
+        <td>将is向后移动一个字节。返回is</td>
+    </tr>
+    <tr>
+        <td>is.peek()</td>
+        <td>将下一个字节作为int返回，但不从流中删除它</td>
+    </tr>
+</table>
+标准库不保证在中间不进行读取操作的情况下连续调用putback或unget。<br>
+函数peek和无参的get版本都以int类型从输入流返回一个字符：可以返回文件尾巴标记符EOF。
+
+##### 多字节操作
+
