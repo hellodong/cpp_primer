@@ -1070,4 +1070,37 @@ while (std::cin.get(ch))
 函数peek和无参的get版本都以int类型从输入流返回一个字符：可以返回文件尾巴标记符EOF。
 
 ##### 多字节操作
+一些未格式化IO操作一次处理大块数据。下表列出了多字节操作
+<table>
+    <tr>
+        <th colspan="2"> <p style="text-align:center;">多字节低层IO操作</p></th>
+    </tr>
+    <tr>
+        <td>is.get(sink, size, delim)</td>
+        <td>从is读取最多size个字节，并保存在字符数组中，字符数组的起始地址由sink给出。<br>读取过程直至遇到字符delim或读取了size个字节或遇到文件尾时停止。<br>如果遇到delim,则将其流在输入流中，不读取存入sink</td>
+    </tr>
+    <tr>
+        <td>is.getline(sink, size, delim)</td>
+        <td>与is.get()版本类似，但会读取并丢弃delim</td>
+    </tr>
+    <tr>
+        <td>is.read(sink, size)</td>
+        <td>读取最多size个字节，存入字符数组sink中。返回is</td>
+    </tr>
+    <tr>
+        <td>is.gcount()</td>
+        <td>返回上一个未格式化读取操作从is读取的字节数</td>
+    </tr>
+    <tr>
+        <td>os.write(source, size)</td>
+        <td>将字符数组source中的size个字节写入os。返回os</td>
+    </tr>
+    <tr>
+        <td>is.ignore(size, delim)</td>
+        <td>读取并忽略最多size个字符，包括delim。与其他未格式化函数不同，ignore有默认参数；size默认值1，delim默认值文件尾巴</td>
+    </tr>
+</table>
+某些操作从输入读取未知个数的字节。我们可以调用gcount确定最后一个未格式化输入操作读取了多少个字符。应该在任何后续未格式化输入操作之前调用gcount。特别是，将字符退回流的单字符操作也属于未格式化输入操作。如果在调用gcount之前调用了peek、unget或putback, 则gcount的返回值为0。
 
+#### 流随机访问
+各种流类型通常都支持对流中数据的随机访问。我们可以重定位流，使之跳过一些数据，首先读取最后一行，然后读取第一行，依此类推。标准库提供了一对函数,定位(seek)到流中给定位置，以及告诉(tell)我们当前位置。
