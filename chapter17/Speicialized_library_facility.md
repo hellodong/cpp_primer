@@ -1103,4 +1103,56 @@ while (std::cin.get(ch))
 某些操作从输入读取未知个数的字节。我们可以调用gcount确定最后一个未格式化输入操作读取了多少个字符。应该在任何后续未格式化输入操作之前调用gcount。特别是，将字符退回流的单字符操作也属于未格式化输入操作。如果在调用gcount之前调用了peek、unget或putback, 则gcount的返回值为0。
 
 #### 流随机访问
-各种流类型通常都支持对流中数据的随机访问。我们可以重定位流，使之跳过一些数据，首先读取最后一行，然后读取第一行，依此类推。标准库提供了一对函数,定位(seek)到流中给定位置，以及告诉(tell)我们当前位置。
+各种流类型通常都支持对流中数据的随机访问。我们可以重定位流，使之跳过一些数据，首先读取最后一行，然后读取第一行，依此类推。标准库提供了一对函数,定位(seek)到流中给定位置，以及告诉(tell)我们当前位置。<br>
+在大多数系统中，绑定到cin、cout、cerr和clog的流不支持随机访问。当我们向cout直接输出时，类似向回跳十个位置这种操作是没有意义的。
+
+- istream和ostream类型通常不支持随机访问，所以本节剩余内容只适用于fstream和sstream类型。
+
+##### seek和tell函数
+为了支持随机访问，IO类型维护一个标记来确定下一个读写操作要在哪里进行。它们还提供了两个函数: 一个函数通过将标记seek到一个给定位置来重定位它；另一个函数tell我们标记的当前位置。标准库实际上定义了两对seek和tell函数。一对用于输入流，一对用于输出流。输入和输出版本的差别在于名字的后缀是g还是p。g版本表示我们正在"获得"数据，而p表示我们正在"放置"数据。
+<table>
+    <tr> 
+        <th colspan="2"> <p style="text-align:center;">seek和tell函数</p></th>
+    </tr>
+    <tr>
+        <td>tellg()</td>
+        <td rowspan="2">返回一个输入流中或输出流中标记的当前位置</td>
+    </tr>
+    <tr>
+        <td>tellg()</td>
+    </tr>
+    <tr>
+        <td>seekp(pos)</td>
+        <td rowspan="2">在一个输入流或输出流中重定位到给定的绝对地址。<br>pos通常是前一个tellg或tellp的返回值</td>
+    </tr>
+    <tr>
+        <td>seekg(pos)</td>
+    </tr>
+    <tr>
+        <td>seekp(off, from)</td>
+        <td rowspan="2">在一个输入流或输出流中将标记定位到from之前或之后off个字节，<br>from可以是下列之一:
+        <br>beg,  偏移量相当于流开始位置
+        <br>cur,  偏移量相当于当前位置
+        <br>end,  偏移量相当于流结束位置
+        </td>
+    </tr>
+    <tr>
+        <td>seekg(off, from)</td>
+    </tr>
+</table>
+
+一个iostream,fstream和stringstream既能读又能写关联流，因此对这些类型对象既能使用g版本又能使用p版本。如果我们试图对一个ifstream流调用tellp，编译器会报错。类似，编译器也不允许我们对一个ostringstream流调用seekg。<br>
+seek和tell有"get"，"put"版本，但在标准库中只维护单一的标记，并不存在独立的读标记和写标记。
+
+- 由于只有单一的标记，因此只要我们在读写操作间切换，就必须进行seek操作重定位标记。
+
+seek函数有两个版本：一个移动到文件绝对地址；另一个移动到一个给定位置指定偏移量:
+```C++
+// 将标记移动到一个固定位置
+seekg(new_position);
+seekp(new_position);
+// 移动到给定起始点之前或之后指定的偏移位置
+seekg(offset, from);
+seekp(offset, from);
+```
+参数 new_position 和 offset的类型分别是pos_type和off_type, 它们定义在头文件istream和ostream中。pos_type表示一个文件位置，而off_type表示距当前位置的一个偏移量 ---- 可以是正的也可以是负的，即我们可以在文件中向前或向后移动
