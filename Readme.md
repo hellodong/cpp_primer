@@ -25,4 +25,7 @@
 ## Chapter16 Template and Generic Programming
 [Template and generic programming](./chapter16/template_and_generic_programming.md)
 
+## Chapter17 Specialized Library Facility
+[Specialized library facility](./chapter17/Speicialized_library_facility.md)
+
 
