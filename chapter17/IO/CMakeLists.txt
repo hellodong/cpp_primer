@@ -22,13 +22,16 @@ endif()
 endif()
 
 add_executable(${PROJECT_NAME} src/main.cpp)
+add_executable(file_tell_seek src/file_io.cpp)
 
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_auto_type)
 target_compile_features(${PROJECT_NAME} PUBLIC cxx_constexpr)
-#target_compile_features(regex_it PUBLIC cxx_constexpr)
+target_compile_features(file_tell_seek PUBLIC cxx_constexpr)
 
 #message("List features of compiler:${CMAKE_CXX_COMPILE_FEATURES}")
 
-install(TARGETS ${PROJECT_NAME}
+file(COPY "copy.out" DESTINATION "${PROJECT_BINARY_DIR}")
+
+install(TARGETS ${PROJECT_NAME} file_tell_seek
 	RUNTIME DESTINATION usr/bin)
 
