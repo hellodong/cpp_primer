@@ -99,3 +99,65 @@ catch(const std::bad_alloc &e) {
 ```
 与这个try关联的catch既能处理构造函数体抛出的异常，也能处理成员初始化列表抛出的异常。<br>
 还有一种情况值得注意，在初始化构造函数的参数时也有可能发生异常，这样的异常不属于函数try语句块的一部分。和其他函数调用一样，如果参数初始化过程中发生了异常，则该异常属于调用表达式的一部分，并将再调用者所在的上下文中处理。
+
+#### noexcept异常说明
+C++11标准中，我们可以通过**noexcept说明**(noexcept specification)指定某个函数不会抛出异常。其形式是关键字noexcept紧跟在函数的参数列表后面，用以标识该函数不会抛出异常。
+```C++
+void recoup(int) noexcept;          // 不会抛出异常
+void alloc(int);                    // 可能抛出异常
+```
+这两条声明语句指出recoup将不会抛出任何异常，而alloc可能会抛出异常。<br>
+对于一个函数来说，noexcept说明要么出现在该函数的所有声明语句和定义语句中，要么一次也不出现。我们也可以在函数指针的声明和定义中指定noexcept。在typedef或类型别名中则不能出现noexcept。在成员函数中，noexcept说明符需要跟在const及引用限定符之后，而在final、override或虚函数=0之前。
+
+##### 违反异常说明
+需要清楚的一个事实是编译器并不会在编译时检查noexcept说明。实际上，如果一个函数在说明了noexcept的同时又含有throw语句或者调用了可能抛出异常的其他函数，编译器将顺利编译通过，并不会因为这种违法异常说明的情况而报错。<br>
+因此可能出现这样一种情况: 尽管函数声明了它不会抛出异常，但实际上还是抛出了。一旦一个noexcept函数抛出异常，程序就会调用terminate以确保遵守不在运行时抛出异常的承诺。上述过程对是否执行栈展开未作约定，因此noexcept可以用在两种情况下：
+- 我们确认函数不会抛出异常
+- 我们根本不知道该如何处理异常
+
+noexcep说明符接受一个可选的实参，该实参必须能转换为bool类型：如果实参是true,则函数不会抛出异常；如果实参是false,函数可能会抛出异常:
+```C++
+void recoup(int) noexcept(true);    // 不会抛出异常
+void alloc(int)  noexcept(false);   // 可能抛出异常
+```
+
+##### noexcept运算符
+noexcept说明符的实参常常与**noexcept运算符**(noexcept operator)混合使用。noexcept运算符是一个一元运算符，它的返回值是一个bool类型的右值常量表达式，用于表示给定的表达式是否会抛出异常。和sizeof类似，noexcept也不会求其运算对象的值。<br>
+我们声明recoup时使用了noexcept说明符，所以下面的表达式的返回为true:
+```C++
+noexcept(recoup(i))
+```
+我们可以使用noexcept运算符得到如下的异常说明:
+```C++
+void f() noexcept(noexcept(g())); // f和g的异常说明一样
+```
+如果函数g承诺了不会抛出异常,那么函数f也不会抛出异常;如果g没有异常说明符，或者g虽然有异常说明符但是允许抛出异常，则f也可能抛出异常。
+
+##### 异常说明与指针、虚函数和拷贝控制
+尽管noexcept说明符不属于函数类型的一部分，但是函数的异常说明仍然会影响函数的使用。<br>
+函数指针及该指针所指的函数必须具有一致的异常说明。如果我们为某个指针做了不抛出异常的声明，则该指针将只能指向不抛出异常的函数。相反，如果我们显式或隐式地说明了指针可能抛出异常，则该指针可以指向任何函数，即使是承诺了不抛出异常地函数也可以:
+```C++
+// recoup 和pf1都承诺不会抛出异常
+void (*pf1)(int) noexcept=recoup; 
+// recoup不会抛出异常，pf2可能抛出异常，二者之间互不干扰
+void (*pf2)(int) = recoup;
+
+pf1 = alloc;    // 错误: alloc可能抛出异常，但是pf1明说了它不会抛出异常
+pf2 = alloc;    // 正确：pf2和alloc都可能抛出异常
+```
+如果一个虚函数承诺了它不会抛出异常，则后续派生出来的虚函数也必须做同样的承诺；相反，如果基类的虚函数允许抛出异常，则派生类的对应函数既可以允许抛出异常，也可以不允许抛出异常:
+```C++
+class Base{
+    public:
+        virtual double f1(double) noexcept; //不会抛出异常
+        virtual int f2() noexcept(false);   //可能抛出异常
+        virtual void f3();                  //可能抛出异常  
+};
+class Derived: public Base{
+    public:
+        double f1(double);                   // 错误: Base::f1承诺不抛出异常
+        int f2() noexcept(false);            // 正确：Base::f2的异常说明一致
+        void f3() noexcept;                  // 正确: Derived的f3做了更严格的限定，这是允许的
+};
+```
+当编译器合成拷贝控制成员时，同时也生成一个异常说明。如果对所有成员和基类的所有操作都承诺了不会抛出异常，则合成的成员是noexcept的。如果合成成员调用的任意一个函数可能抛出异常，则合成的成员是noexcept(false)的。
