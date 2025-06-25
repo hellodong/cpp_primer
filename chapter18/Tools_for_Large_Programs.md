@@ -161,3 +161,51 @@ class Derived: public Base{
 };
 ```
 当编译器合成拷贝控制成员时，同时也生成一个异常说明。如果对所有成员和基类的所有操作都承诺了不会抛出异常，则合成的成员是noexcept的。如果合成成员调用的任意一个函数可能抛出异常，则合成的成员是noexcept(false)的。
+
+##### 异常类层次
+标准库异常构成了下图所示的继承体系：
+![](./images/level_on_exception.png)
+class exception 仅仅定义了拷贝构造函数、拷贝赋值运算符、一个虚析构函数和一个名为what的虚成员。what函数返回一个const char*，该指针指向一个以null结尾的字符数组，并且确保不会抛出任何异常。<br>
+class exception、bad_cast和bad_alloc定义了默认构造函数。类runtime_error和logic_error没有默认构造函数，但是有一个可以接受C风格字符串或者标准库string类型实参的构造函数，这些实参负责提供关于错误的更多信息。在这些类中，what负责返回用于初始化异常对象的信息。因为what是虚函数，所以当我们捕获基类的引用时，对what函数的调用将执行与异常对象动态类型对应的版本。<br>
+实际上，我们很可能需要建立一个自己的异常类体系，用它来表示与应用相关的各种问题。我们设计的异常类可能如下所示:
+```C++
+class out_of_stock: public std::runtime_error{
+    public:
+        explicit out_of_stock(const std::string &s):std::runtime_error(s) {}
+};
+class isbn_mismatch:public std::logic_error{
+    public:
+        explicit isbn_mismatch(const std::string &s):std::logic_error(s) {} 
+    isbn_mismatch(const std::string &s, const std::string &lhs, const std::string &rhs): std::logic_error(s), left(lhs), right(rhs) {}
+    const std::string left, right;
+};
+```
+和其他继承体系一样，异常类也可以看作按照层次关系组织的。层次越低，表示的异常情况就越特殊。例如，在异常类继承体系中位于最顶层的通常是exception, exception表示的含义是某处出错了，至于错误的细节则未作描述。<br>
+继承体系的第二层将exception划分为两个大的类别；运行时错误和逻辑错误。运行时的错误表示的是只有在程序运行才能检测到错误：而逻辑错误一般指的是我们可以在程序代码中发现的错误。<br>
+我们的书店应用程序进一步细分上述异常类别。名为out_of_stock的类表示在运行时可能发生的错误，比如某些顺序无法满足：名为isbn_mismatch的类表示logic_error的一个特例，程序可以通过比较对象的isbn()结果来阻止或处理这一错误。
+
+##### 使用我们自己的异常类型
+我们使用自定义异常类的方式与使用标准异常类的方式完全一样。程序在某处抛出异常类型的对象，在另外的地方捕获并处理这些出现的问题。举个例子，我们可以为Sales_data类定义一个复合加法运算符，当检测到参与加法的两个ISBN编号不一致时抛出名为isbn_mismatch的异常:
+```C++
+Sales_data &Sales_data::operator+=(const Sales_data *rhs){
+    if (isbn()!= rhs.isbn())
+    {
+        throw isbn_mismatch("wrong isbns", isbn(), rhs.isbn());
+    }
+    units_sold += rhs.units_sold;
+    revenue += rhs.revenue;
+    return *this;
+}
+```
+使用了复合加法运算符的代码将能检测到这一错误，进而输出一条相应的错误信息并继续完成其他任务:
+```C++
+Sales_data item1, item2, sum;
+while (std::cin >> item1 >> item2)
+{
+    try {
+        sum = item1 + item2;
+    }catch (const isbn_mismatch &e) {
+        std::cout << e.what() << "left: " << e.left << " right: " << e.right << std::endl;
+    }
+}
+```
