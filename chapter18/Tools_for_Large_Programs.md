@@ -209,3 +209,98 @@ while (std::cin >> item1 >> item2)
     }
 }
 ```
+
+### 命名空间
+大型程序往往会使用多个独立开发的库，这些库又会定义大量的全局名字，如类、函数和模板。当应用程序用到多个供应商提供的库时，不可避免会发生某些名字互相冲突的情况。多个库将名字放置在全局命名空间中将引发**命名空间污染**(namespace pollution)。<br>
+传统上，通过将其定义的全局实体名字设得很长来避免命名空间污染问题，这样得名字通常包含表示名字所属库得前缀部分：
+```C++
+class cplusplus_primer_Query{...};
+string cplusplus_primer_make_plural(size_t, string &);
+```
+这种解决方案显然不太理想：书写和阅读这么长得名字费时费力且过于繁琐。**命名空间**(namespace)为防止名字冲突提供了更加可控的机制。命名空间分割了全局命名空间，其中每个命名空间是一个作用域。通过在某个命名空间中定义库得名字，可以避免全局名字固有得限制。
+
+#### 命名空间得定义
+一个命名空间得定义包含两部分:首先是关键字namespace,随后是命名空间得名字。在命名空间名字后面是一些列由花括号括起来得声明和定义。只要能出现在全局作用域中得声明就能置于命名空间内，主要包括:类、变量、函数、模板和其他命名空间：
+```C++
+namespace cplusplus_primer   {
+    class Sale_data {...};
+    Sales_data operator+(const Sales_data &, const Sales_data &);
+    class Query {...};
+}
+```
+和其他名字一样，命名空间得名字也必须在定义它得作用域内保持唯一。命名空间既可以定义在全局作用域内，也可也定义在其他命名空间，但不能定义在函数或类得内部。
+
+- 命名空间作用域后面无需分号。
+
+##### 每个命名空间都是一个作用域
+和其他作用域类似，命名空间中的每个名字都必须表示该空间内得唯一实体。因为不同命名空间的作用域不同，所以在不同命名空间内可以有相同名字成员。<br>
+定义在某个命名空间中的名字可以被该命名空间内的其他成员直接访问，也可以被这些成员内嵌作用域中的任何单位访问。位于该命名空间之外的代码则必须明确指出所用的名字属于哪个命名空间:
+```C++
+cplusplus_primer::Query q = cplusplus_primer::Query("hello");
+```
+如果其他命名空间也提供了一个名为Query的类，并且我们希望使用这个类替代cplusplus_primer中定义的同名类，则可以按照如下方式修改代码:
+```c++
+AddisonWesleay::Query q= AddisonWesleay::Query("hello");
+```
+
+##### 命名空间可以是不连续的
+命名空间可以定义在几个不同的部分，这一点与其他作用域不太一样。编写如下的命名空间定义:
+```c++
+namespace nsp{
+
+}
+```
+可能定义了一个名为nsp的新命名空间，也可能是为已经存在的命名空间添加一些新成员。如果之前没有名为nsp的命名空间定义，则上述代码创建一个新的命名空间;否则，上述代码打开已经存在的命名空间定义并为其添加一些新成员的声明。
+
+##### 定义本书的命名空间
+我们可以将cplusplus_primer库定义在几个不同的文件中。Sales_data类的声明及其函数将置于Sales_data.h头文件中。
+```C++
+// Sales_data.h
+#include <string>
+namespace cplusplus_primer{
+    class Sales_data{};
+    Sales_data operator+(const Sales_data &, const Sales_data &);
+    // Sales_data的其他接口函数的声明
+}
+
+// Sales_data.cpp
+#include "Sales_data.h"
+namespace cplusplus_primer{
+    // Sales_data成员及重载运算符的定义
+}
+
+// main.cpp
+#include "Sales_data.h"
+int main()
+{
+    using cplusplus_primer::Sales_data;
+    Sales_data trans1, trans2;
+    // ...
+    return 0;
+}
+```
+这种程序的组织方式提供了开发者和库用户所需的模块性。库的开发者可以分别实现每一个类，互相之间没有干扰。<br>
+有一点需要注意，在通常情况下，我们不把#include放在命名空间内部。如果我们这么做了，隐含的意思是把头文件中所有的名字定义成该命名空间的成员。例如，如果Sales_data.h 在包含string头文件前就已经打开了命名空间cplusplus_primer,则程序将出错，因为这么做意味着我们将试图命名空间std嵌套在命名空间cplusplus_primer中。
+
+##### 定义命名空间成员
+作用域中存在合适的声明语句，则命名空间中的代码可以使用同一命名空间定义的名字的简写形式:
+```C++
+#include "Sales_data.h"
+
+namespace cplusplus_primer{ //重新打开命名空间cplusplus_primer 
+                            // 命名空间中定义的成员可以直接使用名字，此时无须前缀 
+std::istream &operator>>(std::istream &in, Sales_data &s)
+{}
+}
+```
+也可以在命名空间定义的外部定义该命名空间的成员。命名空间对于名字的声明必须在作用域内，同时该名字的定义需要明确指出其所属的命名空间:
+```C++
+// 命名空间之外定义的成员必须使用含有前缀的名字
+cplusplus_primer::Sales_data cplusplus_primer::operator+(const Sales_data &lhs, const Sales_data &rhs)
+{
+    Sales_data ret(lhs);
+    // ...
+}
+```
+和定义在类外部的类成员一样，一旦看到含有完整前缀的名字，我们就可以确定该名字位于命名空间的作用域内。在命名空间cplusplus_primer内部，我们可以直接使用该命名空间的其他成员，比如上面代码中，可以直接使用Sales_data定义函数的形参。<br>
+尽管命名空间的成员可以定义在命名空间外部，但是这样的定义必须出现在所属命名空间的外层空间中。换句话说，我们可以在cplusplus_primer或全局作用域中定义Sales_data operator+，但是不能在一个不相关的作用域中定义这个运算符。
