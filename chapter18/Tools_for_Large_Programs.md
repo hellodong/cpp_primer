@@ -549,3 +549,79 @@ int main()
 }
 ```
 因为f接受一个类类型的实参，而且f与C所属的命名空间进行了隐式的声明，所以f能被找到。相反，因为f2没有形参，所以它无法被找到。
+
+#### 重载与命名空间
+命名空间对函数的匹配过程有两方面的影响，其中一个影响非常明显:using声明或using指示能将某些函数添加到候选函数集。另外一个影响则比较微妙。
+
+##### 与实参相关的查找与重载
+在上一节我们了解到，对于接受类类型的函数来说，其名字查找将在实参类所属的命名空间中进行。这条规则对于我们如何确定候选函数集同样也有影响。我们将在每个实参类(以及实参类的基类)所属的命名空间中搜寻候选函数。在这些命名空间中所有与被调用函数同名的函数都将被添加到候选集当中，即使其中某些函数在调用语句处不可见也是如此:
+```C++
+namespace NS{
+    class Quote{/*........*/};
+    void display(const Quote &) {/*........*/}
+}
+class Bulk_item: public NS::Quote {/*.........*/};
+int main(int argc, char *argv[])
+{
+    Bulk_item book1;
+    display(book1);
+    return 0;
+}
+```
+我们传递给display的实参属于类类型Bulk_item, 因此该调用语句的候选函数不仅应该在调用语句所在的作用域中查找，而且也应该在Bulk_item及其基类Quote所属命名空间中查找。命名空间NS中声明的函数display(const Quote&)也将被添加到候选函数集当中。
+
+##### 重载与using声明
+要想理解using声明与重载之间的交互关系，必须首先明确一条: using声明语句声明的是一个名字，而非一个特定的函数：
+```C++
+using NS::print(int);    // 错误： 不能指定形参列表
+using NS::print;         // 正确：using声明只声明一个名字
+```
+**当我们为函数书写using声明时，该函数的所有版本都被引入到当前作用域中**<br>
+一个using声明引入的函数将重载该声明语句所属作用域中已有的其他同名函数。如果using声明出现在局部作用域中，则引入的名字将隐藏外层作用域的相关声明。如果using声明所在的作用域中已经有一个函数与新引入的函数同名且形参列表相同，则该using声明将引发错误。除此之外，using声明将为引入的名字添加额外的重载实例，并最终扩充候选函数集的规模。
+
+##### 重载与using指示
+using指示江门命名空间的成员提升到外层作用域中，如果命名空间的某个函数与该命名空间所属作用域的函数同名，则命名空间的函数将被添加到重载集合中:
+```C++
+namespace libs_R_us{
+    extern void print(int);
+    extern void print(double);
+}
+// 普通的声明
+void print(const std::string &);
+// 这个using 指示把名字添加到print调用的候选函数集
+using namespace libs_R_us;
+// print调用此时的候选函数包括:
+// libs_R_us 的print(int)
+// libs_R_us 的print(double)
+// 显式声明的print(const std::string &)
+void fooBar(int ival)
+{
+    print("Value: ");   // 调用全局函数print(const string &)
+    print(ival);        // 调用libs_R_us::print(int)
+}
+```
+与using声明不同的是，对于using指示来说，引入一个与已有函数形参表完全相同的函数不会产生错误。此时，只要我们指明调用的是命名空间中的函数版本还是当前作用域的版本即可。
+
+##### 跨越多个using指示的重载
+如果存在多个using指示，则来自每个命名空间的名字都会成为候选函数集的一部分:
+```C++
+namespace AW{
+    int print(int);
+}
+
+namespace Primer {
+    double print(double);
+}
+// using指示从不同的命名空间中创建了一个重载函数集合
+using namespace AW;
+using namespace Primer;
+long double print(long double);
+
+int main(int argc, char *argv[])
+{
+    print(1);       // 调用AW::print(int)
+    print(3.1);     // 调用Primer::print(double)
+    return 0;
+}
+```
+在全局作用域中，函数print的重载集合包括print(int)、print(double)和print(long double),尽管它们的声明位于不同作用域中，但它们都属于main函数中print调用的候选函数集。
