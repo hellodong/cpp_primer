@@ -625,3 +625,74 @@ int main(int argc, char *argv[])
 }
 ```
 在全局作用域中，函数print的重载集合包括print(int)、print(double)和print(long double),尽管它们的声明位于不同作用域中，但它们都属于main函数中print调用的候选函数集。
+
+### 多重继承与虚继承
+**多重继承**(multiple inheritance) 是指从多个直接基类中产生的派生类的能力。多重继承的派生类继承了所有父类的属性。概念上非常简单，但是多个基类相互交织产生的细节可能会带来错综复杂的设计问题与实现问题。<br>
+我们将定义个抽象类ZooAnimal, 用它来保存动物园中动物共有的信息并提供公共接口。类Bear将存放Bear科特有的信息，以此类推。我们的应用程序还包括其他一些辅助类，这些类负责封装不同的抽象，如濒临灭绝动物。以类Panda的实现为例，Panda是由Bear和Endangered共同派生而来的。
+
+#### 多重继承
+
+在派生类的派生列表中可以包含多个基类:
+```C++
+class Bear: public ZooAnimal {};
+class Panda: public Bear, public Endangered { /* ... */};
+```
+每个基类包含一个可选的访问说明符。一如往常，如果访问说明符被忽略掉了，则关键字class 对应的默认访问说明符是private，关键字struct对应是public。 <br>
+多重继承的派生列表只能包含已经被定义过的类，而且这些类不能是final的。对于派生类能够继承的基类个数，C++没有进行特殊规定；但是在某个给定的派生类列表中，同一个基类只能出现一次。<br>
+
+多重继承关系中，派生类的对象包含有每个基类的子对象。在Panda对象中含有一个Bear部分、一个Endangered部分以及在Panda中声明的非静态数据成员。<br>
+构造一个派生类的对象将同时构造并初始化它的所有基类子对象。与从一个基类进行的派生一样，多重继承的派生类的构造函数初始值也只能初始化它的直接基类:
+```C++
+// 显示初始化所有基类
+Panda::Panda(std::string name, bool onExhibit):Bear(name, onExhibit, "Panda"), Endangered(Endangered::critical) {}
+// 隐式使用Bear的默认构造函数初始化Bear子对象
+Panda::Panda():Endangered(Endangered::cirtical) {}
+```
+派生类的构造函数初始值列表将实参分别传递给每个直接基类。其中基类的构造顺序与派生列表中基类的出现顺序保持一致，而与派生类构造函数初始值列表中基类的顺序无关。一个Panda对象按照如下次序进行初始化:
+- ZooAnimal 是整个继承体系的最终基类，Bear是Panda的直接基类，ZooAnimal是Bear的基类，所以首先初始化ZooAnimal。
+- 接下来初始化Panda的第一个直接基类Bear。
+- 然后初始化Panda的第二个直接基类Endangered。
+- 最后初始化Panda
+
+在C++11标准中，允许派生类从它的一个或几个基类中继承构造函数。但是如果从多个基类中继承了相同的构造函数(即形参列表完全相同)，则程序将产生错误:
+```C++
+struct Base1{
+    Base1() = default;
+    Base1(const std::string &);
+    Base1(std::share_ptr<int> );
+};
+
+struct Base2 {
+    Base2() = default;
+    Base2(const std::string &);
+    Base2(int);
+};
+
+//错误： D1试图从两个基类中都继承D1::D1(const string &)
+struct D1:public Base1, public Base2 {
+    using Base1::Base1;  // 从Base1继承构造函数 
+    using Base2::Base2;  // 从Base2继承构造函数
+};
+```
+如果一个类从它的多个基类中继承了相同的构造函数，则这个类必须为该构造函数定义它自己的版本:
+```C++
+struct D1:public Base1, public Base2 {
+    using Base1::Base1;  // 从Base1继承构造函数 
+    using Base2::Base2;  // 从Base2继承构造函数
+    // D2 必须自定义一个接受string的构造函数
+    D2(const std::string &s):Base1(s), Base2(s) {}
+    D2() = default;  // 一旦D2定义了它自己的构造函数，必须出现
+};
+```
+
+派生类的析构函数只负责清楚派生类本身分配的资源，派生类的成员及基类都是自动销毁的。合成的析构函数体为空。<br>
+析构函数的调用顺序正好与构造函数相反，在我们例子中，析构函数的调用顺序是 ~Panda, ~Endangered, ~Bear, ~ZooAnimal。
+
+##### 多重继承的派生类的拷贝和移动操作
+与只有一个基类的继承一样，多重继承的派生类如果定义了自己的拷贝/赋值构造函数和赋值运算符，则必须在完整的对象执行拷贝、移动或赋值操作。只有当派生类使用的是合成版本的拷贝、移动或赋值成员时，才会自动对其基类部分执行这些操作。在合成的拷贝控制成员中，每个基类分别使用自己的对应成员隐式的完成构造、赋值或销毁等工作。<br>
+例如，假设Panda使用了合成版本的成员ling_ling的初始化过程 :
+```C++
+Panda ying_yang("ying_yang");
+Panda ling_ling=ying_yang;   //使用拷贝构造函数
+```
+将调用Bear的拷贝构造函数，后者又在执行自己的拷贝任务之前先调用ZooAnimal的拷贝构造函数。一旦ling_ling的Bear部分构造函数，接着就会调用Endangered的拷贝构造函数来创建对象相应的部分。最后，执行Panda的拷贝构造函数。合成的移动构造函数的工作机制与之类似。合成的拷贝赋值运算符的行为与拷贝构造函数很相似。它首先赋值Bear部分(并且通过Bear赋值ZooAnimal部分)，然后赋值Endangered部分，最后是Panda部分。移动赋值运算符的工作机理与之类似。
